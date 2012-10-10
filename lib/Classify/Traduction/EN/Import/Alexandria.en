@@ -1,0 +1,5 @@
+{
+'Where' => 'Where should it search',
+'Default' => 'Default Alexandria\'s directory',
+'Specified' => 'Directory specified below',
+}

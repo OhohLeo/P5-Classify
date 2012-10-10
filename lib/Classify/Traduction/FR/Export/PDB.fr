@@ -1,0 +1,4 @@
+{
+        'Name' => 'Palm PDB',
+        'DatabaseName' => 'Nom de la base de données',
+}

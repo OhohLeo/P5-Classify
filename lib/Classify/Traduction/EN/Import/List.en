@@ -1,0 +1,8 @@
+{
+'Name' => 'Names list',
+'Plugin' => 'Site to be used',
+'UseFirst' => 'Select first one if many results',
+'CommentAuto' => 'Item automatically imported.',
+'CommentSite' => 'Website: ',
+'CommentTitle' => 'Title: ',
+}

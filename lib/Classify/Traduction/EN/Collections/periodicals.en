@@ -1,0 +1,18 @@
+{
+CollectionDescription => 'Periodicals collection',
+Items => {0 => 'Periodicals',
+1 => 'Periodical',
+X => 'Periodicals',
+lowercase1 => 'periodical',
+lowercaseX => 'periodicals'
+},
+NewItem => 'New periodical',
+Title => 'Title',
+Cover => 'Cover',
+Periodical => 'Periodical',
+Number => 'Number',
+Date => 'Date',
+Subject => 'Subject',
+Articles => 'Articles',
+General => 'General',
+}

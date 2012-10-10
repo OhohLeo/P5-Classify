@@ -1,0 +1,8 @@
+{
+'Charset' => 'Codage',
+'Header' => 'Ignorer la première ligne',
+'Separator' => 'Séparateur',
+'Plugin' => 'Site à utiliser',
+'UseFirst' => 'Choisir le 1er si plusieurs résultats',
+'SearchField' => 'Chercher en utilisant',
+}

@@ -1,0 +1,4 @@
+{
+'Name' => 'External disk',
+'ZipAll' => 'Put everything in a zipped file (.gcz)',
+}

@@ -1,0 +1,16 @@
+{
+'Name' => 'Barcode scanner',
+'Type' => 'Scanner type',
+'Local' => 'Local (used as a keyboard)',
+'Network' => 'Network (eg: GCstar Scanner for Android)',
+'Port' => 'Port to listen on',
+'Plugin' => 'Site to be used',
+'UseFirst' => 'Select first one if many results',
+'Waiting' => 'Waiting for barcode',
+'EAN' => 'Barcode',
+'ScanPrompt' => 'Scan an item or press on Done',
+'ScanOtherPrompt' => 'Scan another item or press on Done',
+'Previous' => '"%s" will be added.',
+'NothingFound' => 'Nothing was found for "%s". An empty item will be added.',
+'Terminate' => 'Done',
+}

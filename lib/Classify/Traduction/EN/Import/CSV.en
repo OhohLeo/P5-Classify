@@ -1,0 +1,8 @@
+{
+'Charset' => 'Charset',
+'Header' => 'Ignore first line',
+'Separator' => 'Separator',
+'Plugin' => 'Site to be used',
+'UseFirst' => 'Select first one if many results',
+'SearchField' => 'Search for items using',
+}

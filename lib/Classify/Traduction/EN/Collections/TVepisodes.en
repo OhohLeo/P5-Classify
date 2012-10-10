@@ -1,0 +1,12 @@
+{
+CollectionDescription => 'TV Shows (episodes) collection',
+Items => {  0 => 'Episodes',
+1 => 'Episode',
+X => 'Episodes',
+lowercase1 => 'episode',
+lowercaseX => 'episodes'
+},
+NewItem => 'New episode',
+NewSeries => 'New series',
+Episode => 'Episode',
+}

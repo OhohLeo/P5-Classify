@@ -1,0 +1,7 @@
+{
+'ModelFile' => 'Template file',
+'ModelText' => 'Template text',
+'Models' => 'Template to use',
+'UseFile' => 'Use file',
+'UseModel' => 'Use text area',
+}

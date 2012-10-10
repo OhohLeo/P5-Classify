@@ -1,0 +1,8 @@
+{
+        'Name' => 'Liste de noms',
+        'Plugin' => 'Site à utiliser',
+        'UseFirst' => 'Choisir le 1er si plusieurs résultats',
+        'CommentAuto' => 'Film importé automatiquement.',
+        'CommentSite' => 'Site web : ',
+        'CommentTitle' => 'Titre : ',
+}

@@ -1,0 +1,6 @@
+{
+'Header' => 'Include fields names on the top',
+'Separator' => 'Separator',
+'Replacement' => 'Replace the separator with',
+'Charset' => 'Charset',
+}

@@ -1,0 +1,3 @@
+{
+'NotSupported' => 'Le fichier n\'est pas un type de catalogue Tellico supporté',
+}
