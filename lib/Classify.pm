@@ -53,7 +53,7 @@ sub BUILD
         $self->graphic(
             Classify::Display::Main::->new(
                 trad => Classify::Traduction::->new(data => 'FR'),
-                stop => sub { $self->stop }));
+                on_stop => sub { $self->stop }));
     }
 
     # we launch the application

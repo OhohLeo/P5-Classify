@@ -18,17 +18,6 @@ has on_stop => (
    is => 'rw',
  );
 
-sub BUILD
-{
-    my($self, $data) = @_;
-
-    # on récupère les paramètres
-    $self->trad($data->{trad});
-    $self->on_stop($data->{stop});
-
-    return $self;
-}
-
 =item $obj->set(METHOD_NAME, PATH, NAME, DATA, [ NAME, DATA ] ...)
 
 Permet de créer un menu en fonction de paramètres.

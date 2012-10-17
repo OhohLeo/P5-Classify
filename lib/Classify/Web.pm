@@ -3,21 +3,25 @@ package Classify::Web;
 use strict;
 use warnings;
 
-use Moo;
+use Mojo::DOM;
 use AnyEvent::HTTP;
 use Data::Dumper;
 
+use Moo;
+
 use feature 'say';
 
-=item $obj->request(REQUEST_METHOD, URL, CB)
+=item $obj->send(REQUEST_METHOD, URL, CB)
 
 Permet à une I<COLLECTION> d'envoyer une requête de manière asynchrone au
 I<WEBSITE> souhaité.
 
 =cut
-sub request
+sub send
 {
     my($self, $method, $url, $cb) = @_;
+
+    say "send $method => $url";
 
     # on envoie la requête
     http_request($method => $url, $self->on_parse($cb));
@@ -25,8 +29,8 @@ sub request
 
 =item $obj->on_parse
 
-On reçoit les données asynchrone : permet de directement transmettre les
-informations au destinataire qui les a réclamées.
+Reçoit les données asynchrone : cela permet de filtrer les requêtes qui ont
+abouties et d'appeler la méthode get_response avec les données.
 
 =cut
 sub on_parse
@@ -35,8 +39,45 @@ sub on_parse
 
     return sub
     {
-        $cb->();
-    }
+        my($data, $headers) = @_;
+
+        my($status, $url) = ($headers->{Status}, $headers->{URL});
+
+        unless (defined $status and $status == 200)
+        {
+            say "$url not reached ($status)!";
+            return;
+        }
+
+        $self->rsp($url, Mojo::DOM->new($data), $cb);
+    };
+}
+
+=item $obj->get_response
+
+Cette méthode DOIT être implémenté par le service qui parse la page web.
+
+=cut
+sub rsp
+{
+    croak("'get_response' MUST be implemented!");
+}
+
+=item $obj->format_search
+
+Formate et retourne la requête.
+
+=cut
+sub format_search
+{
+    my(undef, $search) = @_;
+
+    $search =~ s/^ //g;
+    $search =~ s/ $//g;
+    $search =~ s/  / /g;
+    $search =~ s/ /+/g;
+
+    return lc $search;
 }
 
 1;

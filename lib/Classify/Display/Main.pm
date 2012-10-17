@@ -16,7 +16,7 @@ has window => (
 
 sub BUILD
 {
-    my $self = shift->SUPER::BUILD(@_);
+    my $self = shift;
 
     my $window = Gtk2::Window->new;
     $window->set_title ('Classify');
