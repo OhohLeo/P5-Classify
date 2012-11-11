@@ -7,9 +7,31 @@ use Mojo::DOM;
 use AnyEvent::HTTP;
 use Data::Dumper;
 
+use Carp;
+
 use Moo;
 
 use feature 'say';
+
+=item url
+
+Retourne l'url du site web.
+
+=cut
+sub url
+{
+    croak "'url' method should be defined in " . ref shift;
+}
+
+=item info
+
+Retourne des infos descriptives du site web.
+
+=cut
+sub info
+{
+    croak "'info' method should be defined in " . ref shift;
+}
 
 =item $obj->send(REQUEST_METHOD, URL, CB)
 

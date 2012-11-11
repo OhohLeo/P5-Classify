@@ -12,7 +12,7 @@ use Classify::Object::Star;
 
 use feature qw(switch say);
 
-=item $obj->url
+=item url
 
 Retourne l'url du site web.
 
@@ -20,6 +20,17 @@ Retourne l'url du site web.
 sub url
 {
     return 'http://www.imdb.com';
+}
+
+=item info
+
+Retourne des infos descriptives du site web.
+
+=cut
+sub info
+{
+    return "IMDb, the world's most popular and authoritative source for movie,"
+        . " TV and celebrity content.";
 }
 
 =item $obj->req(SEARCH, CB)
@@ -180,17 +191,24 @@ sub movie
         });
 
     my $year = $a->grep(qr/href=\"\/year/)->[0]->text;
-    my $country = $a->grep(qr/href=\"\/country/)->pluck('text');
+
+    my @country;
+    push(@country, @{$a->grep(qr/href=\"\/country/)->pluck('text')});
+
     my $language = $a->grep(qr/href=\"\/language/)->[0]->text;
-    my $genre = $a->grep(qr/href=\"\/genre\//)->pluck('text')->uniq;
+
+    my @genre;
+    push(@genre, @{$a->grep(qr/href=\"\/genre\//)->pluck('text')->uniq});
 
     my $time = $data->find('time')->pluck('text');
     my $budget = $data->find('h4')->grep(qr/Budget/)->[0]->text_after;
+    my $description = $data->find('p')->grep(qr/itemprop=\"description\"/)
+        ->[0]->text;
 
-    my $posters = $data->find('img')->grep(qr/itemprop=\"image\"/)
+    my $poster = $data->find('img')->grep(qr/itemprop=\"image\"/)
         ->[0]->{src};
 
-    my $result = Classify::Object::Movie::->new
+    return Classify::Object::Movie::->new
         (
          name => $name,
          original_name => $origin_name,
@@ -198,15 +216,14 @@ sub movie
          stars => \@stars,
          year => $year,
          date => $time->[0],
+         description => $description,
          duration => $time->[1],
          budget => $budget,
          language => $language,
-         country => \@$country,
-         genre => \@$genre,
-         posters => $posters,
+         country => \@country,
+         genre => \@genre,
+         poster => $poster,
         );
-
-    return $result;
 }
 
 =item $obj->star

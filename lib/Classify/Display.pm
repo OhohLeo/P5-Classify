@@ -33,7 +33,7 @@ sub set
     }
 }
 
-=item $obj->set_menu_bar(NAME, DATA, [ NAME, DATA ] ...)
+=item set_menu_bar(NAME, DATA, [ NAME, DATA ] ...)
 
 Permet de créer un menu en fonction de paramètres.
 
@@ -64,6 +64,23 @@ sub set_menu_bar
     }
 
     return $menu_bar;
+}
+
+=item set_new_window(NAME, DESTROY_CB)
+
+Permet de créer une nouvelle fenêtre.
+
+I<NAME> est le nom de la nouvelle fenêtre.
+
+=cut
+sub set_new_window
+{
+    my $window = Gtk2::Window->new;
+
+    $window->set_title(shift);
+    $window->signal_connect(destroy => shift);
+
+    return $window;
 }
 
 1;

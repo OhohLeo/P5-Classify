@@ -3,60 +3,123 @@
 use strict;
 use warnings;
 
-my $VERSION = '2.0.0';
-
 use Getopt::Long;
+
 use Classify;
 
-sub usage
+my(@collection, @web, $import, $export, $update, $display, $help);
+
+GetOptions(
+    'collection|c=s{1,3}' => \@collection,
+    'web|w=s{1,}'        => \@web,
+    'import|i=s'         => \$import,
+    'export|e=s'         => \$export,
+    'update|u=s'         => \$update,
+    'display|d'          => \$display,
+    'help|h'             => \$help,
+) or die "Incorrect usage : try 'classify.pl -h' !\n";
+
+if ($help)
 {
-    print "Usage: $0 [-u UPDATE-OPTIONS] [-x EXECUTE-OPTIONS] [FILENAME]
+    die <<END;
+usage : classify.pl -c see 'Collection Management'
+                    -w see 'Websites Management'
+                    -i import name, args ...
+                    -e export name, args ...
+                    -u update program
+                    -d activate display
+                    -h this help.
 
-Launch GCstar, a personal collection manager. Without any option, it will open
-FILENAME if specified or the previously opened file.
+Collection Management : -c options
 
-Update options:
+ -c name [ name ... ]
+    Select one or multiple collections.
 
-  -u, --update                 Tell GCstar to look for available updates
-  -a, --all                    Update all components
-  -c, --collection             Update collection models
-  -w, --website                Update plugins to download information
-  -i, --import                 Update plugins to import data
-  -e, --export                 Update plugins to export data
-  -l, --lang                   Update translations
-  -n, --noproxy                Don't ask for a proxy
+ -c new name type
+    Create a new collection.
+    If -w option is used, you can specific websites for this type.
+    Otherwise, a generic list specified for each collection type
+    will be used.
 
-Execute options:
+ -c delete name [ name ... ]
+    Delete a collection.
 
-  -x, --execute                Enter non-interactive mode
-  -c, --collection MODEL       Specify the collection type
-  -w, --website PLUGIN         Specify the plugin to use to download information
-  -i, --import PLUGIN          Specify the plugin to use to import a collection
-  -e, --export PLUGIN          Specify the plugin to use to export the collection
-  -f, --fields FILENAME        File containing fields list to use for import/export
-  -o, --output FILENAME        Write output in FILENAME instead of standard output
-  --download TITLE             Search for the item with TITLE as name
-  --importprefs PREFERENCES    Preferences for the import plugin
-  --exportprefs PREFERENCES    Preferences for the export plugin
-  --list-plugins               List all the plugins available to download information
+ -c info
+    Display all collections informations.
 
-  Preferences for import/export plugins are specified using this schema:
-    \"Key1=>Value1,Key2=>Value2\"
+Websites Management : -w options
 
-Environment variables:
+ -c name [ name ... ]
+    Select one or multiple websites.
 
-  \$HOME                        Used to define following variables if needed
-  \$XDG_CONFIG_HOME             Where configuration files should be stored
-                                  If not defined: \$HOME/.config
-  \$XDG_DATA_HOME               Where some data will be stored
-                                  If not defined: \$HOME/.local/share
+ -w name args [ args ... ]
+    Send a request to the specified website and get answer.
 
-Bugs reporting:
+ -w info
+    Display all websites informations.
 
-  To report bugs, please use this forum:
-    http://forums.gcstar.org/viewforum.php?id=4
-
-";
+END
 }
 
-Classify->new(@ARGV);
+my $classify = Classify->new(display => $display);
+
+if (@collection)
+{
+    die $classify->info_collections(1)
+        if @collection == 1 and $collection[0] eq 'info';
+
+    if (@collection > 2 and $collection[0] eq 'new')
+    {
+        # we remove 1st element
+        shift @collection;
+
+        # we check if collection name already exists
+        die "Collection '" . $collection[0] . "' already exists\n"
+            if defined $classify->get_collection($collection[0]);
+
+        # we check if collection type is valid
+        die 'Unexisting collection : (' . $collection[1] . ")\n"
+            . 'Please choose with on this following list.'
+            . $classify->info_collections
+            unless Classify::check_type('Collection', $collection[1]);
+
+        # we check if collection website is valid
+        foreach my $web (@web)
+        {
+            die "Unexisting website : ($web)\n"
+                . "Please choose with on this following list.\n"
+                . $classify->info_websites
+                unless Classify::check_type('Web', $web);
+        }
+
+        # we set up the collection
+        my $collection = $classify->set_collection(@collection, @web);
+        die "Collection '" . $collection->name . "' has been created.\n"
+            . $collection->info . "\n";
+    }
+
+    if (@collection > 1 and $collection[0] eq 'delete')
+    {
+        # we remove 1st element
+        shift @collection;
+
+        foreach my $collection (@collection)
+        {
+            print "Collection '$collection' " .
+                (defined($classify->delete_collection($collection))
+                ?   'removed' : 'not found') . "!\n";
+        }
+
+        exit;
+    }
+}
+
+if (@web)
+{
+    die  "Websites list : \n" . $classify->info_websites
+        if @web == 1 and $web[0] eq 'info';
+}
+
+# display activated : we start the program
+$classify->start if defined $display;
+

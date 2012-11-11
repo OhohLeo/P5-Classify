@@ -54,7 +54,7 @@ has seen_on => (
    is => 'rw',
  );
 
- has posters => (
+ has poster => (
    is => 'rw',
  );
 
@@ -77,6 +77,10 @@ has seen_on => (
  has color => (
    is => 'rw',
  );
+
+ has description => (
+    is => 'rw',
+    );
 
 1;
 __END__

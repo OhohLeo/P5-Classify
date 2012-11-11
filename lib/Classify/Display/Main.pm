@@ -18,14 +18,12 @@ sub BUILD
 {
     my $self = shift;
 
-    my $window = Gtk2::Window->new;
-    $window->set_title ('Classify');
-    $window->add($self->init);
+    my $window = Classify::Display::set_new_window(
+        'Classify',
+        sub { $self->stop; });
+   $window->add($self->init);
 
-    # set exit signal
-    $window->signal_connect(destroy => sub { $self->stop; });
-
-    $self->window($window);
+   $self->window($window);
 }
 
 =item $obj->init()
