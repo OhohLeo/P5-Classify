@@ -3,6 +3,10 @@ P5-Classify
 
 Optimised Collection Manager
 
+17/11/2012 Leo
+* classify.pl : set up console commands to test websites & imports
+*               create 'info' commands to display detailed informations
+
 11/11/2012 Leo
 * classify.pl : Set up console commands to create collections
 * Collection::Cinema : Set up 1st Collection
