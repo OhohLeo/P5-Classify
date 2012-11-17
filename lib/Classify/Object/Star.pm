@@ -34,6 +34,11 @@ use Moo;
    is => 'rw',
  );
 
+sub info
+{
+    return shift->SUPER::info(
+        qw(nicknames roles born_date death_date born_place death_place images));
+}
 
 1;
 __END__

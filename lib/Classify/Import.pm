@@ -1,4 +1,5 @@
 package Classify::Import;
+use parent Classify::Base;
 
 use strict;
 use warnings;
@@ -7,13 +8,30 @@ use Carp;
 
 use Moo;
 
-has collections => (
+has path => (
+   is => 'rw',
+ );
+
+has on_output => (
+   is => 'rw',
+ );
+
+has display => (
+   is => 'rw',
+ );
+
+has stop_now => (
+   is => 'rw',
+ );
+
+has on_stop => (
    is => 'rw',
  );
 
 =item launch
 
-Méthode devant être implémentée dans tous les imports.
+Méthode devant être implémentée dans tous les imports, permettant de lancer
+l'analyse.
 
 =cut
 sub launch
@@ -21,22 +39,29 @@ sub launch
     croak "'launch' method not implemented in " . ref(shift);
 }
 
-=item feed_collections
+=item output
 
-Méthode permettant d'envoyer les données aux collections à qui elles sont
-destinées.
+Méthode devant être implémentée dans tous les imports, permettant d'émettre les
+données une fois analysées.
 
 =cut
-sub feed_collections
+sub output
 {
-    my($self, @input) = @_;
-
-    return unless defined $self->collections;
-
-    foreach my $collection (@{$self->collections})
+    if (defined(my $out = shift->on_output))
     {
-        $collection->input(@input);
+        return $out->(@_);
     }
+}
+
+=item stop
+
+=cut
+sub stop
+{
+    my $self = shift;
+    warn "HERE STOP!";
+    $self->stop_now(1);
+    $self->on_stop->() if defined $self->on_stop;
 }
 
 1;

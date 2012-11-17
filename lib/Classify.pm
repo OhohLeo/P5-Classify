@@ -221,28 +221,35 @@ sub info_collections
     while (my($name, $class) = each %$list)
     {
         eval "require $class";
+        die $@ if $@;
+
         $result .= " - $name : " . $class->info . "\n";
     }
 
     return $result;
 }
 
-=item $obj->set_import(COLLECTIONS, IMPORT_NAME, [ INIT => ARGS, ... ])
+=item $obj->set_import(IMPORT_NAME, COLLECTIONS [ INIT => ARGS, ... ])
 
 =cut
 sub set_import
 {
-    my($self, $collections, $name) = splice(@_, 0, 3);
-
-    $collections = $self->get_collections($collections) // return;
+    my($self, $name, $collections) = splice(@_, 0, 3);
 
     my $import = get_new_object_from_type('Import', $name, @_);
 
-    foreach my $collection (@$collections)
+    if (defined( $collections = $self->get_collections($collections)))
     {
-        (defined $collection->imports) ?
-            push(@{$collection->imports}, $import)
-            : $collection->imports([ $import ]);
+        $import->on_output(
+            sub
+            {
+                shift;
+
+                foreach my $collections (@$collections)
+                {
+                    $collections->input(@_);
+                }
+            });
     }
 
     return $import;
@@ -285,6 +292,7 @@ sub get_new_object_from_type
     my $class = "Classify::$plugin\::$type";
 
     eval "require $class";
+    die $@ if $@;
 
     return $class->new(@_);
 }
@@ -303,6 +311,7 @@ sub check_type
     my $class = "Classify::$plugin\::$type";
 
     eval "require $class";
+    die $@ if $@;
 
     return $@ ? undef : 1;
 }
@@ -333,19 +342,23 @@ sub get_list ($)
     return \%store;
 }
 
-=item info_websites
+=item get_info(CLASS, WITH_URL)
 
 Return string list of websites infos found.
 
 =cut
-sub info_websites
+sub get_info
 {
-    my $list = get_list('Web');
+    my $list = get_list(shift);
+    my $with_url = shift;
     my $result;
     while (my($name, $class) = each %$list)
     {
         eval "require $class";
-        $result .= " - $name : " . $class->url . "\n"
+        die $@ if $@;
+
+        $result .= " - $name : "
+            . ($with_url ? $class->url : '')
             . $class->info . "\n";
     }
 

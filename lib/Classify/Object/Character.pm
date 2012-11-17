@@ -22,5 +22,10 @@ use Moo;
    is => 'rw',
  );
 
+sub info
+{
+    return shift->SUPER::info(qw(genre quotes found_in played_with));
+}
+
 1;
 __END__

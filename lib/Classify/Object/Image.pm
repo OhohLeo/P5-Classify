@@ -10,5 +10,10 @@ use Moo;
    is => 'rw',
  );
 
+sub info
+{
+    return shift->SUPER::info(qw(date));
+}
+
 1;
 __END__

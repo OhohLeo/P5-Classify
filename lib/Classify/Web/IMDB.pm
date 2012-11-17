@@ -66,7 +66,7 @@ sub rsp
     given ($url)
     {
         when (/find\?q=/) { $result = $self->search($data); }
-        when (/title\/tt[0-9]+/) { $result = $self->movie($data); }
+        when (/title\/tt[0-9]+/) { $result = $self->movie($url, $data); }
     }
 
     $cb->($result);
@@ -161,12 +161,12 @@ sub search
 =cut
 sub movie
 {
-    my($self, $data) = @_;
+    my($self, $url, $data) = @_;
 
-    my $name = $data->find('h1')->grep(qr/class=\"header\"/)->[0]->text;
+    my $name = $data->find('h1')->grep(qr/class=\"header\"/)->[0]->text // undef;
 
     my $origin_name = $data->find('span')
-        ->grep(qr/class=\"title-extra\"/)->[0]->text;
+        ->grep(qr/class=\"title-extra\"/)->[0]->text // undef;
 
     my $a = $data->find('a');
 
@@ -211,6 +211,7 @@ sub movie
     return Classify::Object::Movie::->new
         (
          name => $name,
+         url => $url,
          original_name => $origin_name,
          directors => \@directors,
          stars => \@stars,

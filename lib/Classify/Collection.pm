@@ -1,4 +1,5 @@
 package Classify::Collection;
+use parent Classify::Base;
 
 use strict;
 use warnings;
@@ -17,23 +18,9 @@ has websites => (
    is => 'rw',
  );
 
-has imports => (
-   is => 'rw',
- );
-
 has exports => (
    is => 'rw',
  );
-
-=item info
-
-Retourne des infos descriptives de la collection.
-
-=cut
-sub info
-{
-    croak "'info' method should be defined in " . ref shift;
-}
 
 =item $obj->get_info
 

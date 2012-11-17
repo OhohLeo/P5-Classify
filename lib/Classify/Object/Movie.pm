@@ -40,7 +40,7 @@ use Moo;
 
 has seen_on => (
     is => 'rw',
-    );
+);
 
  has directors => (
    is => 'rw',
@@ -81,6 +81,14 @@ has seen_on => (
  has description => (
     is => 'rw',
     );
+
+sub info
+{
+    return shift->SUPER::info(
+        qw(original_name translate_name other_names year date country language genre
+          seen_on directors writers stars poster images budget duration aspect_ratio
+          color description));
+}
 
 1;
 __END__
