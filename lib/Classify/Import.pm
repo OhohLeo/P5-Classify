@@ -8,6 +8,8 @@ use Carp;
 
 use Moo;
 
+use Classify::Display::Import;
+
 has path => (
    is => 'rw',
  );
@@ -20,11 +22,11 @@ has display => (
    is => 'rw',
  );
 
-has stop_now => (
+has on_stop => (
    is => 'rw',
  );
 
-has on_stop => (
+has condvar => (
    is => 'rw',
  );
 
@@ -37,6 +39,16 @@ l'analyse.
 sub launch
 {
     croak "'launch' method not implemented in " . ref(shift);
+}
+
+=item stop
+
+=cut
+sub stop
+{
+    my $self = shift;
+
+    $self->on_stop->() if defined $self->on_stop;
 }
 
 =item output
@@ -53,15 +65,21 @@ sub output
     }
 }
 
-=item stop
+=item set_display
 
 =cut
-sub stop
+sub set_display
 {
     my $self = shift;
-    warn "HERE STOP!";
-    $self->stop_now(1);
-    $self->on_stop->() if defined $self->on_stop;
+
+    my $display = Classify::Display::Import->new(@_);
+
+    # we start the display
+    $display->start;
+
+    $self->display($display);
+
+    return $display;
 }
 
 1;

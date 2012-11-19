@@ -4,8 +4,13 @@ use parent Classify::Import;
 use strict;
 use warnings;
 
-use AnyEvent::IO;
+use AnyEvent::AIO;
+use IO::AIO;
+
 use Moo;
+
+use Classify::Object::File;
+use Classify::Object::Directory;
 
 use feature 'say';
 
@@ -13,11 +18,11 @@ has is_recursive => (
    is => 'rw',
  );
 
-has file_current => (
+has display => (
    is => 'rw',
  );
 
-has file_nb => (
+has stop_now => (
    is => 'rw',
  );
 
@@ -36,57 +41,71 @@ sub launch
 {
     my($self, $path) = @_;
 
-    if (defined $self->display)
-    {
-    }
-
     $self->stop_now(undef);
-    $self->analyse($path);
+
+    $self->scan($path // $self->path);
 }
 
-=item analyse
+=item stop
 
 =cut
-sub analyse
+sub stop
+{
+    my $self = shift;
+
+    $self->stop_now(1);
+
+    $self->SUPER::stop();
+}
+
+
+=item scan
+
+=cut
+sub scan
 {
     my($self, $path) = @_;
 
     return if defined $self->stop_now;
 
-    $path //= $self->path;
-    my $nb = 0;
-
-    aio_readdir(
-        $path,
+    aio_scandir(
+        $path, 0,
         sub
         {
-            my $names = shift or return;
+            my($dirs, $nondirs) = @_;
 
             return if defined $self->stop_now;
 
-            foreach my $name (@$names)
+            if (defined $nondirs)
             {
-                return if $self->stop_now;
+                foreach my $name (@$nondirs)
+                {
+                    $self->output(Classify::Object::File->new(
+                                  name => $name,
+                                  url => $path));
+                    $self->update_display($name);
+                }
+            }
 
-                aio_lstat(
-                    "$path/$name",
-                    sub
-                    {
-                        return if defined $self->stop_now;
+            return unless defined $dirs;
 
-                        $self->output(
-                            {
-                                path => $path,
-                                name => $name
-                            });
-                        # $self->file_current("$path$name");
-                        # $self->file_nb(++$nb);
-
-                        $self->analyse("$path/$name")
-                            if (-d _ and defined $self->is_recursive);
-                    });
+            foreach my $name (@$dirs)
+            {
+                $self->output(Classify::Object::Directory->new(
+                                  name => $name,
+                                  url => $path));
+                $self->update_display($name);
+                $self->scan("$path/$name") if defined $self->is_recursive;
             }
         });
+}
+
+=item update_display
+
+=cut
+sub update_display
+{
+    (shift->display // return)->update(shift, 0);
 }
 
 1;

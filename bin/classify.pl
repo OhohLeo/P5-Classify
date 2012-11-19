@@ -197,22 +197,15 @@ if (@imports)
             unless Classify::check_type('Import', $name);
 
         # we get the website object to make some requests
-        my $condvar = AnyEvent->condvar;
+        my $condvar = AE::cv;
         my $import = Classify::get_new_object_from_type(
             'Import', $name,
             path => $imports[0],
             is_recursive => $imports[1],
+            condvar => $condvar,
             on_output => sub
             {
-                my $data = shift;
-
-                print delete($data->{name}) . ' (' . delete($data->{path}) . ")\n";
-
-                while (my($key, $value) = each (%$data))
-                {
-                    print " - $key : '$value'\n";
-                }
-
+                print shift->info;
                 $condvar->send;
 
             },
@@ -223,6 +216,26 @@ if (@imports)
             });
 
         $import->launch;
+
+        if (defined $display)
+        {
+            warn "set_display";
+
+            $import->set_display(
+                trad => Classify::Traduction::->new(data => 'FR'),
+                on_stop => sub
+                {
+                    warn "DISPLAY STOP";
+                    $import->stop;
+                    undef $import;
+                    warn "STOOOOP!!!";
+                    Gtk2->main_quit;
+                    $condvar->send;
+                });
+
+            Gtk2->main;
+        }
+
         $condvar->recv;
         exit;
     }
@@ -230,5 +243,5 @@ if (@imports)
 }
 
 # display activated : we start the program
-$classify->start if defined $display;
+#$classify->start if defined $display;
 

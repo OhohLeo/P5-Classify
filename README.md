@@ -3,6 +3,9 @@ P5-Classify
 
 Optimised Collection Manager
 
+19/11/2012 Leo
+* Import::Files : create first asynchronous directories reader & display
+
 17/11/2012 Leo
 * classify.pl : set up console commands to test websites & imports
 *               create 'info' commands to display detailed informations

@@ -66,6 +66,41 @@ sub set_menu_bar
     return $menu_bar;
 }
 
+=item set_cadre(NAME, BOX_TO_PUT_INSIDE)
+
+Permet de créer un cadre pouvant contenir une box.
+
+I<NAME> est le nom du cadre.
+
+=cut
+sub set_cadre
+{
+    my $cadre = Gtk2::Frame->new(shift);
+
+    $cadre->add(shift);
+
+    $cadre->show;
+
+    return $cadre;
+}
+
+=item set_progress_bar(NAME, BOX_TO_PUT_INSIDE)
+
+Permet de créer un cadre pouvant contenir une box.
+
+I<NAME> est le nom du cadre.
+
+=cut
+sub set_progress_bar
+{
+    my $progress_bar = Gtk2::ProgressBar->new();
+
+    $progress_bar->set_text('progress bar');
+    $progress_bar->show;
+
+    return $progress_bar;
+}
+
 =item set_new_window(NAME, DESTROY_CB)
 
 Permet de créer une nouvelle fenêtre.
