@@ -3,6 +3,9 @@ P5-Classify
 
 Optimised Collection Manager
 
+16/12/2012 Leo
+* Import::Files : improve asynchronous research but it is not perfect yet...
+
 19/11/2012 Leo
 * Import::Files : create first asynchronous directories reader & display
 

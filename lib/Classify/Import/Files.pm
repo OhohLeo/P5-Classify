@@ -12,17 +12,17 @@ use Moo;
 use Classify::Object::File;
 use Classify::Object::Directory;
 
-use feature 'say';
+use feature qw(say state);
 
 has is_recursive => (
    is => 'rw',
  );
 
-has display => (
+has nb_of_files => (
    is => 'rw',
  );
 
-has stop_now => (
+has condvar => (
    is => 'rw',
  );
 
@@ -41,23 +41,71 @@ sub launch
 {
     my($self, $path) = @_;
 
-    $self->stop_now(undef);
+    # anyevent condvar initialisation
+    $self->condvar(AnyEvent->condvar);
 
-    $self->scan($path // $self->path);
+    $path //= $self->path;
+
+    # we start the display
+    if (defined(my $display = $self->display))
+    {
+        $self->nb_of_files(1);
+
+        $display->start;
+
+        $self->update_display("Wait for analyse...", 0);
+
+        my $ref_count;
+        $$ref_count = 0;
+        $self->scan_count($path, $ref_count);
+
+        $self->condvar->recv;
+
+        $self->nb_of_files($$ref_count);
+    }
+
+    $self->scan($path);
+
+    $self->condvar->recv;
+
+    $self->stop;
 }
 
-=item stop
+=item scan_count
 
 =cut
-sub stop
+sub scan_count
 {
-    my $self = shift;
+    my($self, $path, $ref_count) = @_;
 
-    $self->stop_now(1);
+    state $count_directories = 0;
 
-    $self->SUPER::stop();
+    aio_scandir(
+        $path, 0,
+        sub
+        {
+            my($dirs, $nondirs) = @_;
+
+            $count_directories-- if $count_directories > 0;
+
+            $$ref_count += @$nondirs // 0 if defined $nondirs;
+
+            if (defined $dirs)
+            {
+                $$ref_count += @$dirs // 0;
+                $count_directories += @$dirs;
+
+                foreach my $name (@$dirs)
+                {
+                    $self->scan_count("$path/$name", $ref_count)
+                        if defined $self->is_recursive;
+                }
+            }
+
+            $self->condvar->send
+                if $count_directories == 0 or not $self->is_recursive;
+        });
 }
-
 
 =item scan
 
@@ -66,7 +114,8 @@ sub scan
 {
     my($self, $path) = @_;
 
-    return if defined $self->stop_now;
+    state $count_files = 0;
+    state $count_directories = 0;
 
     aio_scandir(
         $path, 0,
@@ -74,29 +123,31 @@ sub scan
         {
             my($dirs, $nondirs) = @_;
 
-            return if defined $self->stop_now;
+            $count_directories-- if $count_directories > 0;
 
-            if (defined $nondirs)
+            foreach my $name (@$nondirs)
             {
-                foreach my $name (@$nondirs)
-                {
-                    $self->output(Classify::Object::File->new(
+                $self->output(Classify::Object::File->new(
                                   name => $name,
                                   url => $path));
-                    $self->update_display($name);
-                }
+
+                $self->update_display($name, $count_files++);
             }
-
-            return unless defined $dirs;
-
             foreach my $name (@$dirs)
             {
                 $self->output(Classify::Object::Directory->new(
                                   name => $name,
                                   url => $path));
-                $self->update_display($name);
+
+                $self->update_display($name, $count_files++);
+
                 $self->scan("$path/$name") if defined $self->is_recursive;
             }
+
+            $count_directories += @$dirs;
+
+            $self->condvar->send
+                if $count_directories == 0 or not $self->is_recursive;
         });
 }
 
@@ -105,7 +156,9 @@ sub scan
 =cut
 sub update_display
 {
-    (shift->display // return)->update(shift, 0);
+    my($self, $name, $count) = @_;
+
+    ($self->display // return)->update($name, $count / $self->nb_of_files);
 }
 
 1;

@@ -19,7 +19,7 @@ GetOptions(
     'help|h'             => \$help,
 ) or die "Incorrect usage : try 'classify.pl -h' !\n";
 
-if ($help)# or @ARGV == 0)
+if ($help)
 {
     die <<END;
 usage : classify.pl -c see 'Collections Management'
@@ -68,12 +68,13 @@ Imports Management : -i options
     Send a request to the specified import and get answer.
 
  -i info
-    Display all import sinformations.
+    Display all import informations.
 
 END
 }
 
 my $classify = Classify->new(display => $display);
+my $condvar = AnyEvent->condvar;
 
 if (@collections)
 {
@@ -161,7 +162,6 @@ if (@webs)
 
         # we get the website object to make some requests
         my $web = Classify::get_new_object_from_type('Web', $name);
-        my $condvar = AnyEvent->condvar;
 
         $web->req(join('+', @webs), sub
                    {
@@ -197,7 +197,6 @@ if (@imports)
             unless Classify::check_type('Import', $name);
 
         # we get the website object to make some requests
-        my $condvar = AE::cv;
         my $import = Classify::get_new_object_from_type(
             'Import', $name,
             path => $imports[0],
@@ -206,36 +205,25 @@ if (@imports)
             on_output => sub
             {
                 print shift->info;
-                $condvar->send;
-
             },
             on_stop => sub
             {
-                print "Import stopped!";
+                print "Import stopped!\n";
                 $condvar->send;
             });
 
-        $import->launch;
-
         if (defined $display)
         {
-            warn "set_display";
-
             $import->set_display(
                 trad => Classify::Traduction::->new(data => 'FR'),
                 on_stop => sub
                 {
-                    warn "DISPLAY STOP";
-                    $import->stop;
-                    undef $import;
-                    warn "STOOOOP!!!";
-                    Gtk2->main_quit;
-                    $condvar->send;
+                    $import->display(undef);
+                    $import->stop();
                 });
-
-            Gtk2->main;
         }
 
+        $import->launch;
         $condvar->recv;
         exit;
     }

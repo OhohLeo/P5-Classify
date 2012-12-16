@@ -48,7 +48,17 @@ sub stop
 {
     my $self = shift;
 
-    $self->on_stop->() if defined $self->on_stop;
+    if (defined $self->on_stop)
+    {
+        $self->on_stop->();
+        $self->on_stop(undef);
+    }
+
+    if (defined(my $display = $self->display))
+    {
+        $display->on_stop->();
+        $self->display(undef);
+    }
 }
 
 =item output
@@ -73,9 +83,6 @@ sub set_display
     my $self = shift;
 
     my $display = Classify::Display::Import->new(@_);
-
-    # we start the display
-    $display->start;
 
     $self->display($display);
 
