@@ -9,8 +9,7 @@ use IO::AIO;
 
 use Moo;
 
-use Classify::Object::File;
-use Classify::Object::Directory;
+use Classify::Model;
 
 use feature qw(say state);
 
@@ -31,7 +30,7 @@ has condvar => (
 =cut
 sub info
 {
-    return ' [ path is_recursive ] - analyse directories or files.';
+    return '{ path is_recursive } - analyse directories or files.';
 }
 
 =item launch
@@ -127,19 +126,43 @@ sub scan
 
             foreach my $name (@$nondirs)
             {
-                $self->output(Classify::Object::File->new(
-                                  name => $name,
-                                  url => $path));
+                if ($name =~ $self->filter)
+                {
 
-                $self->update_display($name, $count_files++);
+                    my $extension;
+                    if ($name =~ s/\.(.*)$//)
+                    {
+                        $extension = $1;
+                    }
+
+                    $self->output(
+                        Classify::Model::->new(
+                            type => 'file',
+                            name => $name,
+                            path => $path,
+                            extension => $extension,
+                            url => "$path/$name"));
+                }
+
+                $self->update_display($name, $count_files)
+                    unless defined $self->is_recursive;
+
+                $count_files++;
             }
+
             foreach my $name (@$dirs)
             {
-                $self->output(Classify::Object::Directory->new(
-                                  name => $name,
-                                  url => $path));
+                if ($name =~ $self->filter)
+                {
+                    $self->output(
+                        Classify::Model::->new(
+                            type => 'directory',
+                            name => $name,
+                            url => $path,
+                        ));
+                }
 
-                $self->update_display($name, $count_files++);
+                $self->update_display($name, $count_files);
 
                 $self->scan("$path/$name") if defined $self->is_recursive;
             }
@@ -160,6 +183,7 @@ sub update_display
 
     ($self->display // return)->update($name, $count / $self->nb_of_files);
 }
+
 
 1;
 __END__

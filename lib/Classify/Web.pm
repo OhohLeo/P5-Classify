@@ -1,5 +1,4 @@
 package Classify::Web;
-use parent Classify::Base;
 
 use strict;
 use warnings;
@@ -24,7 +23,15 @@ sub url
     croak "'url' method should be defined in " . ref shift;
 }
 
+=item info
 
+Retourne des infos descriptives du site web.
+
+=cut
+sub info
+{
+    croak "'info' method should be defined in " . ref shift;
+}
 
 =item $obj->send(REQUEST_METHOD, URL, CB)
 

@@ -1,5 +1,4 @@
 package Classify::Import;
-use parent Classify::Base;
 
 use strict;
 use warnings;
@@ -11,6 +10,10 @@ use Moo;
 use Classify::Display::Import;
 
 has path => (
+   is => 'rw',
+ );
+
+has filter => (
    is => 'rw',
  );
 
@@ -59,6 +62,16 @@ sub stop
         $display->on_stop->();
         $self->display(undef);
     }
+}
+
+=item info
+
+Retourne des infos descriptives du site web.
+
+=cut
+sub info
+{
+    croak "'info' method should be defined in " . ref shift;
 }
 
 =item output

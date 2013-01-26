@@ -21,6 +21,8 @@ is_deeply($classify->collections, { 'cinema' => $cinema, });
 
 is_deeply($classify->get_collection('cinema'), $cinema);
 
+is_deeply($classify->get_collections_by_type('Cinema'), $cinema);
+
 is_deeply(
     Classify::get_new_object_from_type('Collection', 'Cinema',
                                        name => 'cinema'),
@@ -32,7 +34,7 @@ is_deeply(Classify::get_list('import'),
 
 is($classify->info_collections,
    "\nGeneric Collection :\n"
-   . " - Cinema : handle, search & classify movies!\n");
-
-is(Classify::info_websites,
-   " - IMDB : http://www.imdb.com\nIMDb, the world's most popular and authoritative source for movie, TV and celebrity content.\n");
+   . " - Cinema : handle, search & classify movies!\n"
+   . "\taccepted configuration keys :\n"
+   . "\t 'movies' = set movies extensions\n"
+   . "\t 'subtitles' = set subtitles extensions\n");

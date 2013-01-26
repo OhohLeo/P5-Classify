@@ -12,10 +12,13 @@ use Classify::Collection::Cinema;
 use Classify::Traduction;
 use Classify::Display::Main;
 
+use Class::Inspector;
 use Storable;
 use File::Find;
 use Carp;
 use Moo;
+
+use Classify::Web::IMDB;
 
 use Data::Dumper;
 
@@ -51,10 +54,10 @@ sub BUILD
     # display initialisation
     if (defined $self->display)
     {
-        $self->display(
-            Classify::Display::Main::->new(
-                trad => Classify::Traduction::->new(data => 'FR'),
-                on_stop => sub { $self->stop; }));
+        # $self->display(
+        #     Classify::Display::Main::->new(
+        #         trad => Classify::Traduction::->new(data => 'FR'),
+        #         on_stop => sub { $self->stop; }));
     }
 }
 
@@ -68,7 +71,7 @@ sub start
     say "Classify is starting up.";
 
     # start display
-    $self->display->start if defined $self->display;
+    # $self->display->start if defined $self->display;
 
     # start anyevent
     $self->condvar->recv;
@@ -108,7 +111,7 @@ sub get_collection
     return shift->collections->{shift // return};
 }
 
-=item $obj->get_collections(NAMES)
+=item $obj->get_collections(NAME, [ NAME ], ...)
 
 I<NAMES> could be an array or a scalar.
 
@@ -118,20 +121,36 @@ if no references has been found.
 =cut
 sub get_collections
 {
-    my($self, $collections) = @_;
+    my $self = shift;
 
     my @collections;
-    if (ref $collections eq 'ARRAY')
+    foreach my $collection (@_)
     {
-        foreach my $collection (@$collections)
-        {
-            push(@collections, $self->get_collection($collection));
-        }
-    } else {
-        push(@collections, $self->get_collection($collections));
+        push(@collections, $self->get_collection($collection));
     }
 
-    return @collections ? \@collections : undef;
+    return @collections;
+}
+
+=item $obj->get_collections_by_type(TYPE)
+
+Return in all cases an array reference containing collections with type
+specified, undef if no references has been found.
+
+=cut
+sub get_collections_by_type
+{
+   my($self, $type) = @_;
+
+   my @collections;
+
+   while (my(undef, $collection) = each %{$self->collections})
+   {
+       push(@collections, $collection)
+           if ref $collection eq "Classify::Collection::$type";
+   }
+
+   return @collections;
 }
 
 =item $obj->set_collection(NAME, TYPE, WEBSITE, [ WEBSITE, ... ])
@@ -158,6 +177,27 @@ sub set_collection
     return $collection;
 }
 
+=item $obj->clean_collection(NAME)
+
+Delete I<NAME> collection & stop all process linked to this collection.
+
+=cut
+sub clean_collection
+{
+    my($self, $name) = @_;
+
+    # we get the new collection
+    my $collection = $self->get_collection($name) // return;
+
+    # we clean all data informations
+    $collection->clean;
+
+    # we store it
+    $self->save_collections;
+
+    return $collection;
+}
+
 =item $obj->delete_collection(NAME)
 
 Delete I<NAME> collection & stop all process linked to this collection.
@@ -167,9 +207,7 @@ sub delete_collection
 {
     my($self, $name) = @_;
 
-    warn Dumper $self->collections;
-
-    # we store the new collection
+    # we delete the collection from the collection list
     my $collection = delete $self->collections->{$name};
 
     # we stop all process linked with this current collection
@@ -229,7 +267,7 @@ sub info_collections
     return $result;
 }
 
-=item $obj->set_import(IMPORT_NAME, COLLECTIONS [ INIT => ARGS, ... ])
+=item $obj->set_import(IMPORT_NAME, COLLECTIONS, [ INIT => ARGS, ... ])
 
 =cut
 sub set_import
@@ -238,19 +276,17 @@ sub set_import
 
     my $import = get_new_object_from_type('Import', $name, @_);
 
-    if (defined( $collections = $self->get_collections($collections)))
-    {
-        $import->on_output(
-            sub
-            {
-                shift;
+    $import->on_output(
+        sub
+        {
+            shift;
 
-                foreach my $collections (@$collections)
-                {
-                    $collections->input(@_);
-                }
-            });
-    }
+            foreach my $collections ($self->get_collections(@$collections))
+            {
+                $collections->input(@_);
+            }
+        });
+
 
     return $import;
 }
@@ -262,11 +298,9 @@ sub set_export
 {
     my($self, $collections, $name) = splice(@_, 0, 3);
 
-    $collections = $self->get_collections($collections) // return;
-
     my $export = get_new_object_from_type('Export', $name, @_);
 
-    foreach my $collection (@$collections)
+    foreach my $collection ($self->get_collections(@$collections))
     {
         (defined $collection->exports) ?
             push(@{$collection->exports}, $export)

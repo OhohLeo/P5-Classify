@@ -6,9 +6,7 @@ use warnings;
 
 use Data::Dumper;
 
-use Classify::Object::Movie;
-use Classify::Object::Character;
-use Classify::Object::Star;
+use Classify::Model;
 
 use feature qw(switch say);
 
@@ -94,7 +92,8 @@ sub search
             $result{character} //= [];
 
             push(@{$result{character}},
-                 Classify::Object::Character::->new(
+                 Classify::Model::->new(
+                     type => 'character',
                      name => $name,
                      url  => $self->url . $url));
         });
@@ -112,7 +111,8 @@ sub search
             $result{star} //= [];
 
             push(@{$result{star}},
-                 Classify::Object::Star::->new(
+                Classify::Model::->new(
+                     type => 'star',
                      name => $name,
                      url  => $self->url . $url));
         });
@@ -146,7 +146,8 @@ sub search
             }
 
             push(@{$result{movie}},
-                 Classify::Object::Movie::->new(
+                 Classify::Model::->new(
+                     type => 'movie',
                      name => $name,
                      year => $year,
                      seen_on => $seen_on,
@@ -175,7 +176,8 @@ sub movie
         sub {
             my $el = shift;
 
-            push(@directors, Classify::Object::Star::->new(
+            push(@directors, Classify::Model::->new(
+                     type => 'star',
                      name => $el->text,
                      url  => $self->url . $el->{href}));
         });
@@ -185,7 +187,8 @@ sub movie
         sub {
             my $el = shift;
 
-            push(@stars, Classify::Object::Star::->new(
+            push(@stars, Classify::Model::->new(
+                     type => 'star',
                      name => $el->text,
                      url  => $self->url . $el->{href}));
         });
@@ -208,22 +211,22 @@ sub movie
     my $poster = $data->find('img')->grep(qr/itemprop=\"image\"/)
         ->[0]->{src};
 
-    return Classify::Object::Movie::->new
-        (
-         name => $name,
-         url => $url,
-         original_name => $origin_name,
-         directors => \@directors,
-         stars => \@stars,
-         year => $year,
-         date => $time->[0],
-         description => $description,
-         duration => $time->[1],
-         budget => $budget,
-         language => $language,
-         country => \@country,
-         genre => \@genre,
-         poster => $poster,
+    return Classify::Model::->new(
+        type =>'movie',
+        name => $name,
+        url => $url,
+        original_name => $origin_name,
+        directors => \@directors,
+        stars => \@stars,
+        year => $year,
+        date => $time->[0],
+        description => $description,
+        duration => $time->[1],
+        budget => $budget,
+        language => $language,
+        country => \@country,
+        genre => \@genre,
+        poster => $poster,
         );
 }
 

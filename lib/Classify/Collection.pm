@@ -1,5 +1,4 @@
 package Classify::Collection;
-use parent Classify::Base;
 
 use strict;
 use warnings;
@@ -14,17 +13,45 @@ has name => (
    is => 'rw',
  );
 
+has imported => (
+   is => 'rw',
+ );
+
+has classified => (
+   is => 'rw',
+ );
+
 has websites => (
    is => 'rw',
  );
 
-has exports => (
-   is => 'rw',
- );
+=item BUILD
+
+=cut
+sub BUILD
+{
+    my $self = shift;
+
+    $self->classified({});
+    $self->imported({});
+    $self->websites([]);
+
+    return $self;
+}
+
+=item info
+
+Return a string that display all specific collection informations.
+
+=cut
+sub info
+{
+    croak "'info' method should be defined in " . ref shift;
+}
 
 =item $obj->get_info
 
-Retourne toutes les infos descriptives de n'importe quelle collection.
+Return a string that display all collection informations.
 
 =cut
 sub get_info
@@ -39,56 +66,33 @@ sub get_info
         $result .= ref $web . ", ";
     }
 
-    if (defined(my $imports = $self->imports))
-    {
-        $result .= "\nImport : ";
-        $result .= "none!\n" unless @$imports;
-        foreach my $import (@$imports)
-        {
-            $result .= ref $import . ", ";
-        }
-    }
-
-    if (defined(my $exports = $self->exports))
-    {
-        $result .= "\nExport : ";
-        $result .= "none!\n" unless @$exports;
-        foreach my $export (@$exports)
-        {
-            $result .= ref $export . ", ";
-        }
-    }
-
     return $result;
 }
 
 =item $obj->input
 
-On gère ici le type d'entrée de la collection choisie.
+Handle here input data.
 
 =cut
 sub input
 {
-    warn 'In collection ' . ref(shift) . 'Data not handled : '
-        . Dumper(\@_);
+    warn "In collection '" . ref(shift) . "', data not handled :\n"
+        . Dumper(shift);
 }
 
-=item $obj->feed_exports(INPUT, INPUT, ...)
+=item $obj->clean
 
-Une fois les données analysées : on les envoie aux gestionnaires d'exportation.
+Remove all informations contained inside the collection.
 
 =cut
-sub feed_exports
+sub clean
 {
-    my($self, @input) = @_;
+    my $self = shift;
 
-    return unless defined $self->exports;
-
-    foreach my $export (@{$self->exports})
-    {
-        $export->input(@input);
-    }
+    $self->classified({});
+    $self->imported({});
 }
 
 1;
 __END__
+

@@ -1,5 +1,5 @@
 use Test::More;
-plan tests => 27;
+plan tests => 24;
 
 use Classify::Web::IMDB;
 
@@ -24,16 +24,11 @@ sub check_search
 
     is(ref $first_character,  Classify::Object::Character);
     is($first_character->name, 'Matrix');
-    is($first_character->url,
-       'http://www.imdb.com/character/ch0029474/');
-
 
     my $first_star = $result->{star}[0];
 
     is(ref $first_star,  Classify::Object::Star);
-    is($first_star->name, 'Marco Materazzi');
-    is($first_star->url,
-       'http://www.imdb.com/name/nm2309403/');
+    is($first_star->name, 'Eddie Mariano');
 
     my $first_movie = $result->{movie}[0];
 
@@ -41,8 +36,6 @@ sub check_search
     is($first_movie->name, 'Matrix');
     is($first_movie->year, 1999);
     is($first_movie->seen_on, undef);
-    is($first_movie->url,
-       'http://www.imdb.com/title/tt0133093/');
 
     $condvar->send unless $requests_count--;
 }
