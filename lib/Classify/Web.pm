@@ -1,4 +1,5 @@
 package Classify::Web;
+use parent Classify::Base;
 
 use strict;
 use warnings;
@@ -9,9 +10,7 @@ use Data::Dumper;
 
 use Carp;
 
-use Moo;
-
-use feature qw(say switch);
+use feature 'switch';
 
 =item url
 
@@ -21,16 +20,6 @@ Retourne l'url du site web.
 sub url
 {
     croak "'url' method should be defined in " . ref shift;
-}
-
-=item info
-
-Retourne des infos descriptives du site web.
-
-=cut
-sub info
-{
-    croak "'info' method should be defined in " . ref shift;
 }
 
 =item $obj->send(REQUEST_METHOD, URL, CB)
@@ -43,7 +32,7 @@ sub send
 {
     my($self, $method, $url, $cb) = @_;
 
-    say "send $method => $url";
+    $self->log_great("send $method => $url");
 
     # on envoie la requête
     http_request($method => $url, $self->on_parse($cb));
@@ -67,7 +56,7 @@ sub on_parse
 
         unless (defined $status and $status == 200)
         {
-            say "$url not reached ($status)!";
+            $self->log_warn("$url not reached ($status)!");
             return;
         }
 

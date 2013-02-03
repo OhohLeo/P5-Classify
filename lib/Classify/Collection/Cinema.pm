@@ -6,8 +6,6 @@ use warnings;
 
 use Moo;
 
-use feature 'say';
-
 use Data::Dumper;
 
 has config_movies => (
@@ -51,7 +49,7 @@ sub input
     # we filter file that already exists
     if (exists $self->imported->{$url})
     {
-        say "'$url' already exists in collection " . $self->name;
+        $self->log_warn("'$url' already exists in collection " . $self->name);
         #return;
     }
 
@@ -77,7 +75,7 @@ sub input
     # we store the new movie;
     $self->imported->{$url} = $input;
 
-    say "\nadd new movie :\n" . $input->info . "\n";
+    $self->info("\nadd new movie :\n" . $input->info . "\n");
 
     # we launch web classify process
     $self->web_search($input) if defined $self->websites;
@@ -160,7 +158,7 @@ sub subtitle_link_to_movie
     # we link the subtitle with the movie
     $movie->set_after('subtitle', $subtitle);
 
-    say "found new subtitle for movie " . $movie->get('name');
+    $self->log_great("found new subtitle for movie " . $movie->get('name'));
 }
 
 
@@ -179,7 +177,7 @@ sub movie_match_other_movies
             $new_movie->set_after('other_movies', $movie);
             $movie->set_after('other_movies', $new_movie);
 
-            say "found links between two movies " . $movie->get('name');
+            $self->log_great("found links between two movies " . $movie->get('name'));
         }
     }
 }

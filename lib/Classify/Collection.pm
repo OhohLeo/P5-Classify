@@ -1,4 +1,5 @@
 package Classify::Collection;
+use parent Classify::Base;
 
 use strict;
 use warnings;
@@ -42,16 +43,6 @@ sub BUILD
     return $self;
 }
 
-=item info
-
-Return a string that display all specific collection informations.
-
-=cut
-sub info
-{
-    croak "'info' method should be defined in " . ref shift;
-}
-
 =item $obj->get_info
 
 Return a string that display all collection informations.
@@ -81,8 +72,10 @@ Handle here input data.
 =cut
 sub input
 {
-    warn "In collection '" . ref(shift) . "', data not handled :\n"
-        . Dumper(shift);
+    my $self = shift;
+
+    $self->warn("In collection '" . ref($self) . "', data not handled :\n"
+                . Dumper(shift));
 }
 
 =item $obj->web_search(INPUT, FORCE)

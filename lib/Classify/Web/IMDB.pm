@@ -8,7 +8,7 @@ use Data::Dumper;
 
 use Classify::Model;
 
-use feature qw(switch say);
+use feature 'switch';
 
 =item url
 

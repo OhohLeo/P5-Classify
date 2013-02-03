@@ -4,11 +4,12 @@ P5-Classify
 Optimised Collection Manager
 
 03/02/2013 Leo
+* Classify : set up log (great, info, warn, critic) centralised process
 * Console : set up asynchronous console to accept/refuse classified data.
 * Import : correct name of the files (bad extension)
 * classify.pl : we can now set up proprieties for each collections
 * Cinema : we handle movie subtitles & find for matching movies
-* Base : removed
+* Base : add generic log methods
 
 26/01/2013 Leo
 * Model : we replace 'Objects' by 'Model' : simple hash manager.

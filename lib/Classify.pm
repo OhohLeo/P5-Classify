@@ -12,6 +12,7 @@ use Classify::Collection::Cinema;
 use Classify::Traduction;
 use Classify::Display::Main;
 
+use Term::ANSIColor qw(:constants);
 use Class::Inspector;
 use Storable;
 use File::Find;
@@ -29,6 +30,10 @@ has condvar => (
  );
 
 has collections => (
+   is => 'rw',
+ );
+
+has no_log => (
    is => 'rw',
  );
 
@@ -68,7 +73,7 @@ sub start
 {
     my $self = shift;
 
-    say "Classify is starting up.";
+    $self->log_great("Classify is starting up.");
 
     # start display
     # $self->display->start if defined $self->display;
@@ -99,9 +104,53 @@ sub stop
     # we store everything
     $self->save_collections;
 
-    say "Classify stopped.";
+    $self->log_great("Classify stopped.");
 }
 
+=item $obj->log
+
+=cut
+sub log
+{
+    my($self, $log) = @_;
+
+   unless (defined $self->no_log)
+   {
+       say $log;
+   }
+}
+
+=item $obj->log_great
+
+=cut
+sub log_great
+{
+    shift->log(GREEN . shift . RESET);
+}
+
+=item $obj->log_info
+
+=cut
+sub log_info
+{
+    shift->log(shift);
+}
+
+=item $obj->log_warn
+
+=cut
+sub log_warn
+{
+    shift->log(YELLOW . shift . RESET);
+}
+
+=item $obj->log_critical
+
+=cut
+sub log_critic
+{
+    shift->log(RED . shift . RESET);
+}
 
 =item $obj->get_collection(NAME)
 
@@ -165,6 +214,7 @@ sub set_collection
 
     # we create the new collection & set the websites
     my $collection = get_new_object_from_type('Collection', $type,
+        classify => $self,
         name => $name,
         websites => @websites > 0 ? @websites : undef);
 
@@ -228,7 +278,6 @@ sub save_collections
 {
     my $self = shift;
 
-
    while (my(undef, $collection) = each %{$self->collections})
    {
        $collection->clean_before_saving;
@@ -289,9 +338,9 @@ sub set_import
         {
             shift;
 
-            foreach my $collections ($self->get_collections(@$collections))
+            foreach my $collection ($self->get_collections(@$collections))
             {
-                $collections->input(@_);
+                $collection->input(@_);
             }
         });
 
@@ -318,7 +367,7 @@ sub set_export
     return $export;
 }
 
-=item get_new_object_from_type(PLUGIN_DIRECTORY, TYPE,
+=item $obj->get_new_object_from_type(PLUGIN_DIRECTORY, TYPE,
     [ INIT => ARGS, ... ])
 
 Return new instance of the object with specified type
@@ -326,7 +375,7 @@ Return new instance of the object with specified type
 =cut
 sub get_new_object_from_type
 {
-    my($plugin, $type) = splice(@_, 0, 2);
+    my($self, $plugin, $type) = splice(@_, 0, 3);
 
     croak "No '$plugin' directory found!"
         unless -d "lib/Classify/$plugin";
@@ -336,7 +385,7 @@ sub get_new_object_from_type
     eval "require $class";
     die $@ if $@;
 
-    return $class->new(@_);
+    return $class->new('classify' => $self, @_);
 }
 
 =item check_type(PLUGIN_DIRECTORY, TYPE)
