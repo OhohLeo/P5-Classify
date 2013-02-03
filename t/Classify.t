@@ -12,7 +12,8 @@ $classify->clean;
 
 my $cinema = Classify::Collection::Cinema->new(
     name => 'cinema',
-    websites => []);
+    handle_result => undef,
+    websites => undef);
 
 is_deeply($classify->set_collection('cinema', 'Cinema'),
           $cinema);

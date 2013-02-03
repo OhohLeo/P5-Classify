@@ -48,11 +48,18 @@ sub input
 
     return unless defined $type and $type eq 'file';
 
+    # we filter file that already exists
+    if (exists $self->imported->{$url})
+    {
+        say "'$url' already exists in collection " . $self->name;
+        #return;
+    }
+
     # we filter subtitles
     if (defined $self->config_subtitles
         and $extension ~~ $self->config_subtitles)
     {
-        $self->handle_subtitle($input);
+        $self->subtitle_handle($input);
         return;
     }
 
@@ -60,54 +67,45 @@ sub input
     return if (defined $self->config_movies
                and not $extension ~~ $self->config_movies);
 
+    # we check if some subtitles match the new movie
+    $self->subtitles_match_movie($input)
+        if $self->subtitles_not_linked;
+
+    # we check if the movie can be linked with other movies
+    # $self->movie_match_other_movies($input);
+
+    # we store the new movie;
     $self->imported->{$url} = $input;
 
-    say "add new movie :\n" . $input->info . "\n";
+    say "\nadd new movie :\n" . $input->info . "\n";
 
-    # we check if some subtitles match the new movie;
-    $self->check_movie_match_subtitles($input)
-        if defined $self->subtitles_not_linked;
+    # we launch web classify process
+    $self->web_search($input) if defined $self->websites;
 }
 
-=item $obj->handle_subtitle
+=item $obj->subtitle_handle
 
 We handle subtitle and search for matching movies.
 
 =cut
-sub handle_subtitle
+sub subtitle_handle
 {
     my($self, $subtitle) = @_;
 
     # 1st : we search for similar movie name in the imported list
-    unless ($self->check_subtitle_match_movies($subtitle))
+    unless ($self->subtitle_match_movies($subtitle))
     {
-        if (not defined $self->subtitles_not_linked)
-        {
-            $self->subtitles_not_linked({});
-        }
+        $self->subtitles_not_linked({})
+            unless defined $self->subtitles_not_linked;
 
-        $self->subtitles_not_linked->{$subtitle->url} = $subtitle;
+        $self->subtitles_not_linked->{$subtitle->get('url')} = $subtitle;
     }
 }
 
-=item $obj->check_movie_match_subtitles(MOVIE)
+=item $obj->subtitle_match_movies(SUBTITLE)
 
 =cut
-sub check_movie_match_subtitles
-{
-    my($self, $movie) = @_;
-
-    while (my(undef, $subtitle) = each(%{$self->subtitles_not_linked}))
-    {
-        $self->link_subtitle_to_movie($subtitle, $movie)
-            if $subtitle->get('name') eq $movie->get('name');
-    }
-}
-
-=item $obj->check_subtitle_match_movies(SUBTITLE)
-
-=cut
-sub check_subtitle_match_movies
+sub subtitle_match_movies
 {
     my($self, $subtitle) = @_;
 
@@ -117,7 +115,7 @@ sub check_subtitle_match_movies
     {
         if ($subtitle->get('name') eq $movie->get('name'))
         {
-            $self->link_subtitle_to_movie($subtitle, $movie);
+            $self->subtitle_link_to_movie($subtitle, $movie);
             $ret = 1;
         }
     }
@@ -125,22 +123,65 @@ sub check_subtitle_match_movies
     return $ret;
 }
 
-=item $obj->link_subtitle_to_movie(SUBTITLE, MOVIE)
+=item $obj->subtitles_match_movie(MOVIE)
+
+=cut
+sub subtitles_match_movie
+{
+    my($self, $movie) = @_;
+
+    while (my(undef, $subtitle) = each(%{$self->subtitles_not_linked}))
+    {
+        $self->subtitle_link_to_movie($subtitle, $movie)
+            if $subtitle->get('name') eq $movie->get('name');
+
+        # XXX We can't make probability stuff here!!
+    }
+}
+
+=item $obj->subtitle_link_to_movie(SUBTITLE, MOVIE)
 
 Link subtitle with specified movie.
 
 =cut
-sub link_subtitle_to_movie
+sub subtitle_link_to_movie
 {
     my($self, $subtitle, $movie) = @_;
 
     # we delete subtitle from the list if it exists
-    delete $self->subtitles_not_linked->{$subtitle->get('url')};
+    if ($self->subtitles_not_linked)
+    {
+        delete $self->subtitles_not_linked->{$subtitle->get('url')};
+
+        $self->subtitles_not_linked(undef)
+            unless %{$self->subtitles_not_linked};
+    }
 
     # we link the subtitle with the movie
     $movie->set_after('subtitle', $subtitle);
 
     say "found new subtitle for movie " . $movie->get('name');
+}
+
+
+=item $obj->movie_match_other_movies(NEW_MOVIE)
+
+=cut
+sub movie_match_other_movies
+{
+    my($self, $new_movie) = @_;
+
+    while (my(undef, $movie) = each(%{$self->imported}))
+    {
+        if ($new_movie->get('name') eq $movie->get('name'))
+        {
+            # we link the new movie with the movie
+            $new_movie->set_after('other_movies', $movie);
+            $movie->set_after('other_movies', $new_movie);
+
+            say "found links between two movies " . $movie->get('name');
+        }
+    }
 }
 
 1;

@@ -3,6 +3,17 @@ P5-Classify
 
 Optimised Collection Manager
 
+03/02/2013 Leo
+* Console : set up asynchronous console to accept/refuse classified data.
+* Import : correct name of the files (bad extension)
+* classify.pl : we can now set up proprieties for each collections
+* Cinema : we handle movie subtitles & find for matching movies
+* Base : removed
+
+26/01/2013 Leo
+* Model : we replace 'Objects' by 'Model' : simple hash manager.
+* Cinema : first collection set up
+
 16/12/2012 Leo
 * Import::Files : improve asynchronous research but it is not perfect yet...
 

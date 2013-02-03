@@ -75,14 +75,14 @@ sub on_parse
     };
 }
 
-=item $obj->get_response
+=item $obj->rsp
 
 Cette méthode DOIT être implémenté par le service qui parse la page web.
 
 =cut
 sub rsp
 {
-    croak("'get_response' MUST be implemented!");
+    croak("'rsp' MUST be implemented!");
 }
 
 =item $obj->format_search

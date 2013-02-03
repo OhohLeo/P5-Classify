@@ -58,16 +58,12 @@ sub launch
         $$ref_count = 0;
         $self->scan_count($path, $ref_count);
 
-        $self->condvar->recv;
+        $self->con_dvar->recv;
 
         $self->nb_of_files($$ref_count);
     }
 
     $self->scan($path);
-
-    $self->condvar->recv;
-
-    $self->stop;
 }
 
 =item scan_count
@@ -128,7 +124,7 @@ sub scan
             {
                 if ($name =~ $self->filter)
                 {
-
+                    my $orig_name = $name;
                     my $extension;
                     if ($name =~ s/\.(.*)$//)
                     {
@@ -141,7 +137,7 @@ sub scan
                             name => $name,
                             path => $path,
                             extension => $extension,
-                            url => "$path/$name"));
+                            url => "$path/$orig_name"));
                 }
 
                 $self->update_display($name, $count_files)

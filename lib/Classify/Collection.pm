@@ -25,6 +25,10 @@ has websites => (
    is => 'rw',
  );
 
+has handle_result  => (
+   is => 'rw',
+ );
+
 =item BUILD
 
 =cut
@@ -34,7 +38,6 @@ sub BUILD
 
     $self->classified({});
     $self->imported({});
-    $self->websites([]);
 
     return $self;
 }
@@ -58,10 +61,12 @@ sub get_info
 {
     my $self = shift;
 
+    return "\n Web : none!\n" unless defined $self->websites;
+
     my $result;
     $result .= "\nWeb : ";
-    $result .= "none!\n" unless @{$self->websites};
-    foreach my $web (@{$self->websites})
+
+    foreach my $web ($self->websites)
     {
         $result .= ref $web . ", ";
     }
@@ -69,7 +74,7 @@ sub get_info
     return $result;
 }
 
-=item $obj->input
+=item $obj->input(INPUT)
 
 Handle here input data.
 
@@ -78,6 +83,60 @@ sub input
 {
     warn "In collection '" . ref(shift) . "', data not handled :\n"
         . Dumper(shift);
+}
+
+=item $obj->web_search(INPUT, FORCE)
+
+Handle here input data.
+
+=cut
+sub web_search
+{
+    my($self, $input, $force) = @_;
+
+    my $search = web_format($input->get('req') // $input->get('name'));
+
+    my $inc = 0;
+
+    my @websites = $self->websites;
+
+    foreach my $web (@websites)
+    {
+        my $name = lc substr(ref $web, 15);
+
+        $web->req(
+            $search,
+            sub
+            {
+                $self // return;
+
+                $input->set('web_' . $name, shift);
+
+                # we received all the data : search is now over
+                if (@websites == ++$inc)
+                {
+                    $self->handle_result->($input)
+                        if defined $self->handle_result;
+                }
+            });
+    }
+}
+
+=item web_format
+
+Return formated web request.
+
+=cut
+sub web_format
+{
+    my $search = shift;
+
+    $search =~ s/^ //g;
+    $search =~ s/ $//g;
+    $search =~ s/  / /g;
+    $search =~ s/ /+/g;
+
+    return lc $search;
 }
 
 =item $obj->clean
@@ -91,6 +150,18 @@ sub clean
 
     $self->classified({});
     $self->imported({});
+}
+
+=item clean_before_saving
+
+Clean collection before saving.
+
+=cut
+sub clean_before_saving
+{
+    my $self = shift;
+
+    $self->handle_result(undef);
 }
 
 1;

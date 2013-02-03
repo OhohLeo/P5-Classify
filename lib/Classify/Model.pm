@@ -13,6 +13,9 @@ use Moo;
 
 use Data::Dumper;
 
+=item $obj->BUILD
+
+=cut
 sub BUILD
 {
     my($self, $input) = @_;
@@ -27,7 +30,7 @@ sub BUILD
     $self->check;
 }
 
-=item get(NAME, ...)
+=item $obj->get(NAME, ...)
 
 Get the value of I<NAME> from data
 
@@ -36,6 +39,10 @@ sub get
 {
     my $self = shift;
 
+    # simple result
+    return $self->data->{shift()} unless @_ > 1;
+
+    # multiple results
     my @ret;
     foreach my $name (@_)
     {
@@ -45,7 +52,7 @@ sub get
     return @ret;
 }
 
-=item set(NAME, VALUE, [ NAME, VALUE ], ...)
+=item $obj->set(NAME, VALUE, [ NAME, VALUE ], ...)
 
 Set the I<VALUE> for I<NAME> in data.
 
@@ -54,9 +61,12 @@ sub set
 {
     my $self = shift;
 
-    my $ret = 1;
+    my $ret;
     while (my($name, $value) = splice(@_, 0, 2))
     {
+        # check if name is not a regex
+        return unless $name =~ /\w+/;
+
         if ($name eq 'type')
         {
             $self->check_type($value) // next;
@@ -64,12 +74,13 @@ sub set
         }
 
         $self->data->{$name} = $value;
+        $ret = 1;
     }
 
     return $ret;
 }
 
-=item set_after(NAME, VALUE, [ VALUE, ] ...)
+=item $obj->set_after(NAME, VALUE, [ VALUE, ] ...)
 
 Set the I<VALUE> for I<NAME> in data.
 
@@ -99,8 +110,8 @@ sub set_after
 
             when (/Classify::Model/)
             {
-                return $data->set_after($name, @_);
-            }
+                $data->{$name} = [ $data, @_ ];
+             }
 
             default
             {
@@ -116,7 +127,7 @@ sub set_after
     return 1;
 }
 
-=item check
+=item $obj->check
 
 Check if all mandatory keys are filled for specified type.
 
@@ -143,7 +154,7 @@ sub check
     return $ret;
 }
 
-=item check_type(TYPE)
+=item $obj->check_type(TYPE)
 
 Check the specified type exists and return the method associated.
 
@@ -161,7 +172,7 @@ sub check_type
     return undef;
 }
 
-=item merge(MODEL)
+=item $obj->merge(MODEL)
 
 Merge a model with another, check if there is no key conflict.
 

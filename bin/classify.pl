@@ -6,6 +6,9 @@ use warnings;
 use Getopt::Long;
 
 use Classify;
+use Classify::Console;
+
+use Data::Dumper;
 
 my(@collections, @webs, $filter, @imports, @exports, $update, $display, $help);
 
@@ -28,7 +31,6 @@ usage : classify.pl -c see 'Collections Management'
                     -f see 'Filter Management'
                     -i see 'Imports Management'
                     -e see 'Exports Management'
-                    -u see 'Update Management'
                     -t see 'Translate Management'
                     -d activate graphic application
                     -h this help.
@@ -181,6 +183,7 @@ if (@collections)
         # we set up the collection
         my $collection = $classify->set_collection(
             $collections[0], $collections[1], @webs);
+
         die "Collection '" . $collection->name . "' has been created.\n"
             . $collection->info . "\n";
     }
@@ -331,7 +334,8 @@ if (@imports)
     }
 
     # -i name args args ...
-    # Select one import & their arguments. See info field for arguments detailed.
+    # Select one import & their arguments. See info field for arguments
+    # detailed.
     my $name = shift @imports;
 
     # we check if import is valid
@@ -346,7 +350,6 @@ if (@imports)
         path => $imports[0],
         filter=> qr/$filter/,
         is_recursive => $imports[1],
-        condvar => $condvar,
         on_output => sub
         {
             my $input = shift;
@@ -359,7 +362,8 @@ if (@imports)
         on_stop => sub
         {
             print "Import stopped!\n";
-            $condvar->send;
+
+            $condvar->send unless @webs;
         });
 
     if (defined $display)
@@ -373,7 +377,35 @@ if (@imports)
             });
     }
 
+    my $console;
+    foreach my $collection (@collections)
+    {
+        $collection->handle_result(
+            sub
+            {
+                $console->on_input($collection, shift);
+            });
+    }
+
+
     $import->launch;
+
+    if (@webs)
+    {
+        $console = Classify::Console::->new(
+            on_stop => sub
+            {
+                # we stop import process
+                $import->stop();
+
+                # we stop websites process
+
+                $condvar->send;
+            });
+
+        $console->launch;
+    }
+
     $condvar->recv;
     $classify->save_collections;
     exit;

@@ -166,7 +166,7 @@ sub set_collection
     # we create the new collection & set the websites
     my $collection = get_new_object_from_type('Collection', $type,
         name => $name,
-        websites => \@websites);
+        websites => @websites > 0 ? @websites : undef);
 
     # we store the new collection
     $self->collections->{$name} = $collection;
@@ -226,7 +226,15 @@ Save all collections.
 =cut
 sub save_collections
 {
-    store(shift->collections, STORE_DST);
+    my $self = shift;
+
+
+   while (my(undef, $collection) = each %{$self->collections})
+   {
+       $collection->clean_before_saving;
+   }
+
+    store($self->collections, STORE_DST);
 }
 
 =item $obj->info_collections(ALL)
