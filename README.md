@@ -3,6 +3,10 @@ P5-Classify
 
 Optimised Collection Manager
 
+24/02/2013 Leo
+* Traduction : set up new simple traduction ods file
+* Correct all dzil tests
+
 03/02/2013 Leo
 * Classify : set up log (great, info, warn, critic) centralised process
 * Console : set up asynchronous console to accept/refuse classified data.
