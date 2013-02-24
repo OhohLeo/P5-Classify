@@ -38,14 +38,14 @@ Method used to display current informations.
 =item $obj->log_great
 =item $obj->log_info
 =item $obj->log_warn
-=item $obj->log_critical
+=item $obj->log_critic
 
 =cut
 BEGIN
 {
     no strict;
 
-    for (qw(great info warn critical))
+    for (qw(great info warn critic))
     {
         my $method = 'log_' . $_;
         *$method = sub { shift->classify->$method(shift)  };

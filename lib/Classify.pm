@@ -34,10 +34,6 @@ has collections => (
    is => 'rw',
  );
 
-has no_log => (
-   is => 'rw',
- );
-
 has trad => (
    is => 'rw',
  );
@@ -46,9 +42,18 @@ has display => (
    is => 'rw',
  );
 
+has save => (
+   is => 'rw',
+ );
+
+has no_log => (
+   is => 'rw',
+ );
+
 use constant
 {
-    STORE_DST => '/mnt/admin/git/P5-Classify/var/classify',
+    STORE_CLASSIFY    => 'var/classify',
+    STORE_COLLECTIONS => 'var/collections',
 };
 
 =head2 METHODS
@@ -67,11 +72,16 @@ sub BUILD
     # anyevent condvar initialisation
     $self->condvar(AnyEvent->condvar);
 
+    # classify initialisation
+    $self->save(eval "retrieve(STORE_CLASSIFY)" // {});
+
     # collections initialisation
-    $self->collections(eval "retrieve(STORE_DST)" // {});
+    $self->collections(eval "retrieve(STORE_COLLECTIONS)" // {});
 
     # traduction initialisation
-    $self->trad(Classify::Traduction::->new());
+    $self->trad(Classify::Traduction::->new(
+                    classify => $self,
+                    language => $self->trad));
 
     # display initialisation
     if (defined $self->display)
@@ -129,9 +139,7 @@ sub stop
 =cut
 sub translate
 {
-    my @result = ((shift->trad // return)->translate(@_));
-
-    return @result;
+    return ((shift->trad // return)->translate(@_));
 }
 
 =item $obj->log
@@ -141,10 +149,7 @@ sub log
 {
     my($self, $log) = @_;
 
-   unless (defined $self->no_log)
-   {
-       say $log;
-   }
+    say $log unless defined $self->no_log;
 }
 
 =item $obj->log_great
@@ -310,7 +315,21 @@ sub save_collections
        $collection->clean_before_saving;
    }
 
-    store($self->collections, STORE_DST);
+    store($self->collections, STORE_COLLECTIONS);
+}
+
+=item $obj->save_classify
+
+Save specific params.
+
+=cut
+sub save_classify
+{
+    my($self, $key, $value) = @_;
+
+    $self->save->{$key} = $value;
+
+    store($self->save, STORE_CLASSIFY);
 }
 
 =item $obj->info_collections(ALL)

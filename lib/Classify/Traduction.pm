@@ -1,4 +1,5 @@
 package Classify::Traduction;
+use parent Classify::Base;
 
 use strict;
 use warnings;
@@ -33,12 +34,29 @@ has language => (
 
 =over 4
 
-=item $obj->BUILD
+=item $obj->BUILD()
 
 =cut
 sub BUILD
 {
     shift->init;
+}
+
+
+=item $obj->info()
+
+=cut
+sub info
+{
+    my $languages = shift->get_available_languages;
+
+    my $info = 'List of available traductions :';
+    while (my($key, $language) = each %$languages)
+    {
+        $info .= "\n - $language\t: use '$key' input language";
+    }
+
+    return "$info\n";
 }
 
 =item $obj->init(FILE, LANGUAGE)
@@ -53,7 +71,56 @@ sub init
     $self->get_data($file);
 
     $self->ods_file($file);
-    $self->language($language // DEFAULT_LANGUAGE);
+
+    $language //= $self->language;
+
+    my $languages = $self->get_available_languages;
+    if (defined $language and exists $languages->{$language})
+    {
+        $self->language($language);
+        return;
+    }
+
+    $self->language($self->classify->save->{trad} // DEFAULT_LANGUAGE);
+}
+
+=item $obj->get_available_languages()
+
+Get available language list.
+
+=cut
+sub get_available_languages
+{
+    return (shift->data // return)->{'Classify'}{'Language'};
+}
+
+=item $obj->set_language(LANGUAGE)
+
+Check if the language is available and set it otherwise set DEFAULT_LANGUAGE.
+
+=cut
+sub set_language
+{
+    my($self, $language) = @_;
+
+    my $languages = $self->get_available_languages;
+
+    if (exists $languages->{$language})
+    {
+        $self->log_info("Use $language language.");
+
+        $self->language($language);
+
+        $self->classify->save_classify('trad', $language);
+
+        return $languages->{$language};
+    }
+
+    $self->log_critic("Impossible to set '$language'! Set default language.");
+
+    $self->language(DEFAULT_LANGUAGE);
+
+    return undef;
 }
 
 =item $obj->get(SHEET_NAME, NAME)
@@ -133,36 +200,6 @@ sub translate_recursive
     }
 }
 
-=item $obj->get_available_languages()
-
-Get available language list.
-
-=cut
-sub get_available_languages
-{
-    return (shift->data // return)->{'Classify'}{'Language'};
-}
-
-=item $obj->set_language(LANGUAGE)
-
-Check if the language is available and set it otherwise set DEFAULT_LANGUAGE.
-
-=cut
-sub set_language
-{
-    my($self, $language) = @_;
-
-    my $languages = $self->get_available_languages;
-
-    if (exists $languages->{$language})
-    {
-        $self->language($language);
-
-        return $languages->{$language};
-    }
-
-    return undef;
-}
 
 =item $obj->get_data(FILE)
 

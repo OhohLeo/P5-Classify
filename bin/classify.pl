@@ -7,10 +7,12 @@ use Getopt::Long;
 
 use Classify;
 use Classify::Console;
+use Classify::Traduction;
 
 use Data::Dumper;
 
-my(@collections, @webs, $filter, @imports, @exports, $update, $display, $help);
+my(@collections, @webs, $filter, @imports, @exports, $update, $display, $trad,
+   $help);
 
 GetOptions(
     'collection|c=s{1,}' => \@collections,
@@ -18,6 +20,7 @@ GetOptions(
     'filter|f=s'         => \$filter,
     'import|i=s{1,}'     => \@imports,
     'export|e=s{1,}'     => \@exports,
+    'trad|t=s'           => \$trad,
     'update|u=s'         => \$update,
     'display|d'          => \$display,
     'help|h'             => \$help,
@@ -31,7 +34,7 @@ usage : classify.pl -c see 'Collections Management'
                     -f see 'Filter Management'
                     -i see 'Imports Management'
                     -e see 'Exports Management'
-                    -t see 'Translate Management'
+                    -t see 'Traduction Management'
                     -d activate graphic application
                     -h this help.
 
@@ -88,14 +91,33 @@ Imports Management : -i options
  -i info
     Display all import informations.
 
+Traduction Management : -t options
+
+ -i language
+    Set the specific language ('EN' by default).
+
+ -i info
+    Display all traduction informations.
+
 END
 }
 
-my $classify = Classify->new(display => $display);
+my $classify = Classify->new(display => $display,
+                             trad => $trad);
+
 my $condvar = AnyEvent->condvar;
 
 # we set the filter if it is not used.
 $filter //= '';
+
+if ($trad)
+{
+    # -w info
+    #    Display traduction lists.
+    die  "Traduction list : \n" . $classify->trad->info
+        if $trad eq 'info'
+        or not $classify->trad->set_language($trad);
+}
 
 if (@webs)
 {

@@ -1,9 +1,12 @@
 use Test::More;
 plan tests => 7;
 
+use Classify;
 use Classify::Traduction;
 
-my $trad = Classify::Traduction->new();
+my $classify = Classify->new(trad => 'EN');
+
+my $trad = $classify->trad;
 
 is($trad->ods_file, 'etc/trad.ods');
 is($trad->language, 'EN');
@@ -26,6 +29,6 @@ my @result = $trad->translate(
     { 'MenuEdit' => 'edit', 'config' => 'MenuConfiguration' });
 
 is_deeply(\@result, [ 'Fichier', 'toto',
-                      [ 'importer', 1, 2, 'exporter'],
+                      [ 'Importer', 1, 2, 'Exporter'],
                       { 'Edition' => 'edit',
                         'config' => 'Configuration' }]);
