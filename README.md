@@ -5,11 +5,12 @@ Optimised Collection Manager
 
 24/02/2013 Leo
 * Traduction : set up new simple traduction ods file
+* Display : adapt display with new traduction behavior
 * Correct all dzil tests
 
 03/02/2013 Leo
 * Classify : set up log (great, info, warn, critic) centralised process
-* Console : set up asynchronous console to accept/refuse classified data.
+* Console : set up asynchronous console to accept/refuse classified data
 * Import : correct name of the files (bad extension)
 * classify.pl : we can now set up proprieties for each collections
 * Cinema : we handle movie subtitles & find for matching movies

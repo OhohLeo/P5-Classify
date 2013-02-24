@@ -9,6 +9,8 @@ use Data::Dumper;
 
 use Moo;
 
+use feature 'switch';
+
 use constant
 {
     DEFAULT_LANGUAGE => 'EN',
@@ -54,16 +56,81 @@ sub init
     $self->language($language // DEFAULT_LANGUAGE);
 }
 
-=item $obj->get(SHEET_NAME, NUMBER)
+=item $obj->get(SHEET_NAME, NAME)
 
-Get the translated value in I<SHEET_NAME> at specific I<NUMBER> of line.
+Get the translated value in I<SHEET_NAME> with specific key I<NAME>.
 
 =cut
 sub get
 {
-    my($self, $sheet_name, $number) = @_;
+    my($self, $sheet_name, $name) = @_;
 
-    return ($self->data // return)->{$sheet_name}{$self->language}[$number];
+    return ($self->data // return)->{$sheet_name}{$name}{$self->language};
+}
+
+=item $obj->translate(SHEET_NAME, STRUCTURE)
+
+Get the translated structure based on I<SHEET_NAME>
+
+=cut
+sub translate
+{
+    my($self, $sheet_name) = splice(@_, 0, 2);
+
+    my @params;
+
+    foreach my $param (@_)
+    {
+        push(@params, $self->translate_recursive($sheet_name, $param));
+    }
+
+    return (@params);
+}
+
+=item $obj->translate_recursive(TRADUCTION, DATA)
+
+Recursive method to translate recursively all possible structure.
+
+=cut
+sub translate_recursive
+{
+    my($self, $sheet_name, $data) = @_;
+
+    for (ref $data)
+    {
+        when ('')
+        {
+            return $self->get($sheet_name, $data) // $data;
+        }
+
+        when ('ARRAY')
+        {
+            my @params;
+            foreach my $param (@$data)
+            {
+                push(@params, $self->translate_recursive($sheet_name, $param));
+            }
+            return \@params;
+        }
+
+        when ('HASH')
+        {
+            my %params;
+            while (my($key, $value) = each %$data)
+            {
+                my $new_key =  $self->get($sheet_name, $key) // $key;
+                $params{$new_key} =
+                    $self->translate_recursive($sheet_name, $value);
+            }
+
+            return \%params;
+        }
+
+        default
+        {
+            return $data;
+        }
+    }
 }
 
 =item $obj->get_available_languages()
@@ -73,16 +140,7 @@ Get available language list.
 =cut
 sub get_available_languages
 {
-    my $self = shift;
-
-    my %languages;
-
-    while (my($key, $value) = each %{($self->data // return)->{'Classify'}})
-    {
-        $languages{$key} = @$value[0];
-    }
-
-    return \%languages;
+    return (shift->data // return)->{'Classify'}{'Language'};
 }
 
 =item $obj->set_language(LANGUAGE)
@@ -137,6 +195,7 @@ sub get_data
             foreach my $row (split(/<table:table-row/, $sheet))
             {
                 my $column_count = 0;
+                my $type;
 
                 foreach my $cell (split(/<table:table-cell/, $row))
                 {
@@ -145,11 +204,17 @@ sub get_data
                         if ($row_count == 1)
                         {
                             push(@column_name, $1);
-                            $content{$1} = [];
                             next;
                         }
 
-                        push($content{$column_name[$column_count - 1]}, $1);
+                        if ($column_count == 1)
+                        {
+                            $type = $1;
+                        }
+                        else
+                        {
+                            $content{$type}{$column_name[$column_count - 2]} = $1;
+                        }
                     }
 
                     $column_count++;

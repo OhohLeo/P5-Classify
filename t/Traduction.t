@@ -1,5 +1,5 @@
 use Test::More;
-plan tests => 6;
+plan tests => 7;
 
 use Classify::Traduction;
 
@@ -14,8 +14,18 @@ is_deeply($trad->get_available_languages,
           'EN' => 'English'
           });
 
-is($trad->get('Classify', 0), 'English');
+is($trad->get('Classify', 'Language'), 'English');
 
 is($trad->set_language('FR'), 'Français');
 
-is($trad->get('Classify', 0), 'Français');
+is($trad->get('Classify', 'Language'), 'Français');
+
+my @result = $trad->translate(
+    'Classify', MenuFile, 'toto',
+    [ 'MenuImport', 1, 2, 'MenuExport' ],
+    { 'MenuEdit' => 'edit', 'config' => 'MenuConfiguration' });
+
+is_deeply(\@result, [ 'Fichier', 'toto',
+                      [ 'importer', 1, 2, 'exporter'],
+                      { 'Edition' => 'edit',
+                        'config' => 'Configuration' }]);

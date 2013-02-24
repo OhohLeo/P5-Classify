@@ -415,7 +415,7 @@ if (@imports)
 }
 
 # display activated : we start the program
-# $classify->start if defined $display;
+$classify->start if defined $display;
 
 sub exit_great
 {

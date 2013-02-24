@@ -8,9 +8,14 @@ use warnings;
 use AnyEvent;
 use AnyEvent::Handle;
 
-use Classify::Collection::Cinema;
 use Classify::Traduction;
 use Classify::Display::Main;
+
+use Classify::Collection::Cinema;
+
+use Classify::Web::IMDB;
+
+use Data::Dumper;
 
 use Term::ANSIColor qw(:constants);
 use Class::Inspector;
@@ -18,10 +23,6 @@ use Storable;
 use File::Find;
 use Carp;
 use Moo;
-
-use Classify::Web::IMDB;
-
-use Data::Dumper;
 
 use feature 'say';
 
@@ -34,6 +35,10 @@ has collections => (
  );
 
 has no_log => (
+   is => 'rw',
+ );
+
+has trad => (
    is => 'rw',
  );
 
@@ -65,13 +70,16 @@ sub BUILD
     # collections initialisation
     $self->collections(eval "retrieve(STORE_DST)" // {});
 
+    # traduction initialisation
+    $self->trad(Classify::Traduction::->new());
+
     # display initialisation
     if (defined $self->display)
     {
-        # $self->display(
-        #     Classify::Display::Main::->new(
-        #         trad => Classify::Traduction::->new(data => 'FR'),
-        #         on_stop => sub { $self->stop; }));
+        $self->display(
+            Classify::Display::Main::->new(
+                classify => $self,
+                on_stop => sub { $self->stop; }));
     }
 }
 
@@ -85,7 +93,7 @@ sub start
     $self->log_great("Classify is starting up.");
 
     # start display
-    # $self->display->start if defined $self->display;
+    $self->display->start if defined $self->display;
 
     # start anyevent
     $self->condvar->recv;
@@ -114,6 +122,16 @@ sub stop
     $self->save_collections;
 
     $self->log_great("Classify stopped.");
+}
+
+=item $obj->translate
+
+=cut
+sub translate
+{
+    my @result = ((shift->trad // return)->translate(@_));
+
+    return @result;
 }
 
 =item $obj->log

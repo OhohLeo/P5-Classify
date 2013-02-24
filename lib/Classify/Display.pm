@@ -1,4 +1,5 @@
 package Classify::Display;
+use parent Classify::Base;
 
 use strict;
 use warnings;
@@ -9,10 +10,6 @@ use Data::Dumper;
 use Moo;
 
 use feature 'switch';
-
-has trad => (
-   is => 'rw',
- );
 
 has on_stop => (
    is => 'rw',
@@ -29,11 +26,11 @@ Permet de créer un menu en fonction de paramètres.
 =cut
 sub set
 {
-    my($self, $method_name) = splice(@_, 0, 2);
+    my($self, $sheet_name, $method_name) = splice(@_, 0, 3);
 
     if (defined(my $method = $self->can("set_$method_name")))
     {
-        return $method->($self->trad->translate(@_));
+        return $method->($self->classify->translate($sheet_name, @_));
     }
 }
 
@@ -53,7 +50,7 @@ sub set_menu_bar
     {
         my($name, $data) = splice(@_, 0, 2);
 
-        my $menu = Gtk2::Menu->new() ;
+        my $menu = Gtk2::Menu->new();
 
         while (@$data)
         {

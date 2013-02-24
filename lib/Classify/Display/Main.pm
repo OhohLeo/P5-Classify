@@ -83,6 +83,16 @@ sub stop
     $self->on_stop->();
 }
 
+=item $obj->set(METHOD_NAME, PATH, NAME, DATA, [ NAME, DATA ] ...)
+
+Permet de créer un menu en fonction de paramètres.
+
+=cut
+sub set
+{
+    return shift->SUPER::set('Classify', @_);
+}
+
 =item $obj->menu_bar()
 
 Permet d'afficher la barre des menus
@@ -93,9 +103,8 @@ sub menu_bar
     my $self = shift;
 
     return $self->set(
-        'menu_bar', 'Standard',
-        'MenuFile',
-        [ 'MenuHistory', 'toto', 'MenuImport', 'toto', 'MenuExport', 'toto' ],
+        'menu_bar',
+        'MenuFile', [ 'MenuImport', 'toto', 'MenuExport', 'toto' ],
         'MenuEdit', [],
         'MenuConfiguration', []),
 }
