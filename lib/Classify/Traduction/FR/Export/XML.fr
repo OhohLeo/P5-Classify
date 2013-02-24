@@ -1,7 +1,0 @@
-{
-        'ModelFile' => 'Fichier modèle',
-        'ModelText' => 'Texte du modèle',
-        'Models' => 'Modèle à utiliser',
-        'UseFile' => 'Spécifié dans un fichier',
-        'UseModel' => 'Spécifié dans la zone texte',
-}

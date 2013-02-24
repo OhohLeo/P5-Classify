@@ -1,6 +1,0 @@
-{
-        'Header' => 'Inclure les noms des champs au début',
-        'Separator' => 'Séparateur',
-        'Replacement' => 'Remplacer le séparateur par',
-        'Charset' => 'Codage',
-}

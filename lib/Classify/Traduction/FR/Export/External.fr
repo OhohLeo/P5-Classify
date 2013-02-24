@@ -1,4 +1,0 @@
-{
-        'Name' => 'Disque externe',
-        'ZipAll' => 'Tout compresser dans un fichier (.gcz)',
-}

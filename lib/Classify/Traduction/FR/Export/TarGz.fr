@@ -1,3 +1,0 @@
-{
-        'Info' => 'L\'archive se trouve dans le fichier : ',
-}

@@ -1,9 +1,0 @@
-{
-Items => {0 => 'Items',
-1 => 'Item',
-X => 'Items',
-lowercase1 => 'item',
-lowercaseX => 'items'
-},
-NewItem => 'New item',
-}

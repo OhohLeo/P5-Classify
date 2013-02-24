@@ -1,5 +1,0 @@
-{
-        'Where' => 'Où rechercher :',
-        'Default' => 'Répertoire par défaut Alexandria',
-        'Specified' => 'Répertoire indiqué ci-dessous',
-}

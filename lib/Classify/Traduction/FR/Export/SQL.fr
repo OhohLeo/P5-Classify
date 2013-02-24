@@ -1,6 +1,0 @@
-{
-        'WithDrop' => 'Inclure une instruction DROP',
-        'WithCreate' => 'Inclure une instruction CREATE',
-        'TableName' => 'Nom de la table',
-        'InfoFile' => 'Fichier SQL : ',
-}

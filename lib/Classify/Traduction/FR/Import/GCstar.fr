@@ -1,3 +1,0 @@
-{
-        'CopyPictures' => 'Copier les images',
-}
