@@ -158,7 +158,20 @@ sub clean_before_saving
 {
     my $self = shift;
 
+    $self->classify(undef);
     $self->handle_result(undef);
+}
+
+=item restore(CLASSIFY)
+
+Restore collection after saving.
+
+=cut
+sub restore
+{
+    my($self, $classify) = @_;
+
+    $self->classify($classify);
 }
 
 1;

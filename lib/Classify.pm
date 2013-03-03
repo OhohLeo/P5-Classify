@@ -244,6 +244,13 @@ sub set_collection
 {
     my($self, $name, $type, @websites) = @_;
 
+    # we check if collection name already exists
+    if (defined $self->get_collection($name))
+    {
+        $self->log_warn("Collection '$name' already exists");
+        return;
+    }
+
     # we create the new collection & set the websites
     my $collection = $self->get_new_object_from_type('Collection', $type,
         classify => $self,
@@ -257,6 +264,18 @@ sub set_collection
     $self->save_collections;
 
     return $collection;
+}
+
+=item $obj->display_set_collection
+
+Graphical way to create a new collection.
+
+=cut
+sub display_set_collection
+{
+    my($self, $cb) = @_;
+
+    return ($self->display // return)->menu_new_collection->($cb);
 }
 
 =item $obj->clean_collection(NAME)
@@ -310,12 +329,19 @@ sub save_collections
 {
     my $self = shift;
 
-   while (my(undef, $collection) = each %{$self->collections})
+    my %collections = %{$self->collections};
+
+    while (my(undef, $collection) = each %collections)
    {
        $collection->clean_before_saving;
    }
 
     store($self->collections, STORE_COLLECTIONS);
+
+   while (my(undef, $collection) = each %collections)
+   {
+       $collection->restore($self);
+   }
 }
 
 =item $obj->save_classify

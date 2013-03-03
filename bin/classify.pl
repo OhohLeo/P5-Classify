@@ -8,6 +8,7 @@ use Getopt::Long;
 use Classify;
 use Classify::Console;
 use Classify::Traduction;
+use Classify::Display::Main;
 
 use Data::Dumper;
 
@@ -178,37 +179,50 @@ if (@collections)
     #    If -w option is used, you can specific websites for this type.
     #    Otherwise, a generic list specified for each collection type
     #    will be used.
-    if (@collections > 2 and $collections[0] eq 'new')
+    if ($collections[0] eq 'new')
     {
-        # we remove 1st element
-        shift @collections;
-
-        # we check if collection name already exists
-        exit_warn("Collection '" . $collections[0] . "' already exists\n")
-            if defined $classify->get_collection($collections[0]);
-
-        # we check if collection type is valid
-        exit_warn('Unexisting collection : (' . $collections[1] . ")\n"
-            . 'Please choose with on this following list.'
-            . $classify->info_collections)
-            unless Classify::check_type('Collection', $collections[1]);
-
-        # we check if collection website is valid
-        foreach my $web (@webs)
+        if (defined $display)
         {
-            exit_warn("Unexisting website : ($web)\n"
-                . "Please choose with on this following list.\n"
-                . $classify->info_websites)
-                unless Classify::check_type('Web', $web);
+            $classify->display_set_collection(
+                sub
+                {
+                    Gtk2->main_quit;
+                });
+
+            Gtk2->main;
+            exit_great('Collection has been created.');
         }
+        elsif (@collections > 2)
+        {
+            # we remove 1st element
+            shift @collections;
 
-        # we set up the collection
-        my $collection = $classify->set_collection(
-            $collections[0], $collections[1], @webs);
+            # we check if collection type is valid
+            exit_warn('Unexisting collection : (' . $collections[1] . ")\n"
+                      . 'Please choose with on this following list.'
+                      . $classify->info_collections)
+                unless Classify::check_type('Collection', $collections[1]);
 
-        exit_great("Collection '" . $collection->name . "' has been created.\n"
-            . $collection->info . "\n");
-}
+            # we check if collection website is valid
+            foreach my $web (@webs)
+            {
+                exit_warn("Unexisting website : ($web)\n"
+                          . "Please choose with on this following list.\n"
+                          . $classify->info_websites)
+                    unless Classify::check_type('Web', $web);
+            }
+
+            # we set up the collection
+            my $collection = $classify->set_collection(
+                $collections[0], $collections[1], @webs);
+
+            exit unless defined $collection;
+
+            exit_great("Collection '" . $collection->name
+                       . "' has been created.\n"
+                       . $collection->info . "\n");
+        }
+    }
 
     # -c config name key value [ value ... ]
     #    Configure a specified collection.

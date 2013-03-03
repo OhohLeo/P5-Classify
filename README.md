@@ -3,6 +3,9 @@ P5-Classify
 
 Optimised Collection Manager
 
+03/03/2013 Leo
+* Display : set up new collection creation window
+
 24/02/2013 Leo
 * Classify : use 'save' hash to store specific data (translation language)
 * Traduction : set up new simple traduction ods file

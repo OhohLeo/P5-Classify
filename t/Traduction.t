@@ -26,9 +26,8 @@ is($trad->get('Classify', 'Language'), 'Français');
 my @result = $trad->translate(
     'Classify', MenuFile, 'toto',
     [ 'MenuImport', 1, 2, 'MenuExport' ],
-    { 'MenuEdit' => 'edit', 'config' => 'MenuConfiguration' });
+    { 'config' => 'MenuConfiguration' });
 
 is_deeply(\@result, [ 'Fichier', 'toto',
                       [ 'Importer', 1, 2, 'Exporter'],
-                      { 'Edition' => 'edit',
-                        'config' => 'Configuration' }]);
+                      { 'config' => 'Configuration' }]);

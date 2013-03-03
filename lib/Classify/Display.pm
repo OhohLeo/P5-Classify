@@ -26,12 +26,22 @@ Permet de créer un menu en fonction de paramètres.
 =cut
 sub set
 {
-    my($self, $sheet_name, $method_name) = splice(@_, 0, 3);
+    my($self, $method_name) = splice(@_, 0, 2);
 
     if (defined(my $method = $self->can("set_$method_name")))
     {
-        return $method->($self->classify->translate($sheet_name, @_));
+        return $method->($self->translate(@_));
     }
+}
+
+=item $obj->translate(SHEET_NAME, DATA ...)
+
+Return I<DATA> translate.
+
+=cut
+sub translate
+{
+    return shift->classify->translate(@_);
 }
 
 =item set_menu_bar(NAME, DATA, [ NAME, DATA ] ...)
@@ -55,7 +65,8 @@ sub set_menu_bar
         while (@$data)
         {
             my($item_name, $cb) = splice(@$data, 0, 2);
-            my $menu_item = Gtk2::MenuItem->new_with_label($item_name) ;
+            my $menu_item = Gtk2::MenuItem->new_with_label($item_name);
+            $menu_item->signal_connect('button_press_event' => $cb);
             $menu->append($menu_item) ;
         }
 
@@ -65,24 +76,6 @@ sub set_menu_bar
     }
 
     return $menu_bar;
-}
-
-=item set_cadre(NAME, BOX_TO_PUT_INSIDE)
-
-Permet de créer un cadre pouvant contenir une box.
-
-I<NAME> est le nom du cadre.
-
-=cut
-sub set_cadre
-{
-    my $cadre = Gtk2::Frame->new(shift);
-
-    $cadre->add(shift);
-
-    $cadre->show;
-
-    return $cadre;
 }
 
 =item set_progress_bar(NAME, BOX_TO_PUT_INSIDE)
@@ -102,21 +95,181 @@ sub set_progress_bar
     return $progress_bar;
 }
 
-=item set_new_window(NAME, DESTROY_CB)
+=item set_window(NAME, DESTROY_CB)
 
-Permet de créer une nouvelle fenêtre.
+Create new window called I<NAME>.
 
-I<NAME> est le nom de la nouvelle fenêtre.
+Call I<DESTROY_CB> when the window is closed.
 
 =cut
-sub set_new_window
+sub set_window
 {
     my $window = Gtk2::Window->new;
 
     $window->set_title(shift);
-    $window->signal_connect(destroy => shift);
+    $window->signal_connect(destroy => shift // sub {});
 
     return $window;
+}
+
+=item set_frame(NAME, BOX, TYPE, X, Y)
+
+Create a frame with I<NAME> as name and I<X>, I<Y> for the alignement.
+
+I<TYPE> value could be :
+    - 'none'
+    - 'in'
+    - 'out'
+    - 'etched_in' (by default)
+    - 'etched_out'
+
+=cut
+sub set_frame
+{
+    my $frame = Gtk2::Frame->new(shift);
+
+    $frame->add(shift);
+    $frame->set_shadow_type(shift // 'etched_in');
+    $frame->set_label_align(@_) if @_;
+
+    return $frame;
+}
+
+=item set_label(TEXT, SIZE, COLOR, JUSTIFY, WRAP)
+
+Create a text label with I<TEXT>.
+
+I<COLOR> could be :
+    - yellow
+    - green
+    - blue
+
+I<JUSTIFY> value could be :
+    - 'left'
+    - 'right'
+    - 'center' (default)
+    - 'fill'
+
+I<WRAP> could be 1 or 0.
+
+=cut
+sub set_label
+{
+    my($text, $size, $color, $justify, $wrap) = @_;
+    my $label = Gtk2::Label->new($text);
+
+    $label->set_markup("<span foreground=\"$color\" size=\"$size\">$text</span>");
+    $label->set_justify($justify);
+    $label->set_line_wrap($wrap);
+
+    return $label;
+}
+
+=item set_entry(TEXT, CB)
+
+Create an input text with I<NAME> as frame name and I<TEXT> as inside text.
+
+I<CB> is called when we press enter.
+
+=cut
+sub set_entry
+{
+    my $entry = Gtk2::Entry->new();
+
+    $entry->set_text(shift);
+
+    $entry->signal_connect(activate => shift // sub {});
+
+    return $entry;
+}
+
+=item set_button(NAME, CB)
+
+Create a button with I<NAME> displayed inside.
+
+I<CB> is called when we click on the button.
+
+=cut
+sub set_button
+{
+    my $button = Gtk2::Button->new(shift);
+
+    $button->signal_connect(clicked => shift // sub {});
+
+    return $button;
+}
+
+=item set_combo_box(BOX, LIST)
+
+=cut
+sub set_combo_box
+{
+    my $box = shift;
+
+    my $combo_box = Gtk2::ComboBox->new_text;
+
+    foreach (@_)
+    {
+        $combo_box->append_text($_);
+    }
+
+    $box->pack_start($combo_box, 0, 0, 0);
+
+    return $combo_box;
+}
+
+=item set_check_buttons(BOX, LIST)
+
+=cut
+sub set_check_buttons
+{
+    my $box = shift;
+
+    my %check_buttons;
+
+    foreach (@_)
+    {
+        my $check_button = Gtk2::CheckButton->new($_);
+        $check_buttons{$_} = $check_button;
+        $box->pack_start($check_button, 0, 0, 0);
+    }
+
+    return \%check_buttons;
+}
+
+=item set_message_dialog(PARENT, FLAGS, TYPE, BUTTONS, MESSAGE, CB)
+
+Create a button with I<NAME> displayed inside.
+
+I<CB> is called when we click on the button.
+
+I<FLAGS> could be :
+ - 'modal'
+ - 'destroy-with-parent'
+ - 'no-separator'
+
+I<TYPE> could be :
+ - 'info'
+ - 'question'
+ - 'error'
+ - 'warning'
+
+I<BUTTON> could be :
+ - 'none'
+ - 'ok'
+ - 'close'
+ - 'cancel'
+ - 'yes-no'
+ - 'ok-cancel'
+
+=cut
+sub set_message_dialog
+{
+    my $dialog = Gtk2::MessageDialog->new->new(shift);
+
+    $dialog->signal_connect(clicked => shift // sub {});
+
+    return $dialog;
 }
 
 1;

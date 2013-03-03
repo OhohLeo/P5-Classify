@@ -148,7 +148,8 @@ sub translate
 
     foreach my $param (@_)
     {
-        push(@params, $self->translate_recursive($sheet_name, $param));
+        push(@params, $self->translate_recursive(
+                 $sheet_name, $param // next));
     }
 
     return (@params);
