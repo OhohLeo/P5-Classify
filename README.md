@@ -3,6 +3,9 @@ P5-Classify
 
 Optimised Collection Manager
 
+10/03/2013 Leo
+* Display : add color selector for new collection creation window
+
 03/03/2013 Leo
 * Display : set up new collection creation window
 

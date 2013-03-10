@@ -26,6 +26,10 @@ has websites => (
    is => 'rw',
  );
 
+has color => (
+   is => 'rw',
+ );
+
 has handle_result  => (
    is => 'rw',
  );
@@ -45,6 +49,16 @@ sub BUILD
     $self->imported({});
 
     return $self;
+}
+
+=item $obj->set_color(GTK_COLOR)
+
+Set collection 16-bit RGB values.
+
+=cut
+sub set_color
+{
+    shift->color(shift);
 }
 
 =item $obj->get_info

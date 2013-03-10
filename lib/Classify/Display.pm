@@ -95,7 +95,7 @@ sub set_progress_bar
     return $progress_bar;
 }
 
-=item set_window(NAME, DESTROY_CB)
+=item set_window(NAME, BORDER_WIDTH, DESTROY_CB)
 
 Create new window called I<NAME>.
 
@@ -107,6 +107,7 @@ sub set_window
     my $window = Gtk2::Window->new;
 
     $window->set_title(shift);
+    $window->set_border_width(shift // 0);
     $window->signal_connect(destroy => shift // sub {});
 
     return $window;
@@ -208,6 +209,8 @@ sub set_combo_box
 
     my $combo_box = Gtk2::ComboBox->new_text;
 
+    $combo_box->set_focus_on_click(1);
+
     foreach (@_)
     {
         $combo_box->append_text($_);
@@ -265,12 +268,73 @@ I<BUTTON> could be :
 =cut
 sub set_message_dialog
 {
-    my $dialog = Gtk2::MessageDialog->new->new(shift);
-
-    $dialog->signal_connect(clicked => shift // sub {});
-
-    return $dialog;
+    return Gtk2::MessageDialog->new(@_);
 }
+
+=item set_button_drawing_area(BOX)
+
+=cut
+sub set_button_drawing_area
+{
+    my $box = shift;
+
+    my $button = Gtk2::Button->new();
+    $button->show();
+    $box->pack_start( $button, 0, 0, 0 );
+
+    # Create a button box
+    my $buttonbox = new Gtk2::VBox(0, 0);
+    $buttonbox->show();
+    $button->add($buttonbox);
+
+    # Create the drawing area used to display the color
+    my $drawingarea = new Gtk2::DrawingArea();
+    $drawingarea->size(32, 32);
+    $drawingarea->show();
+    $buttonbox->pack_start($drawingarea, 0, 0, 0);
+
+    # Create a random color
+    my $color = Gtk2::Gdk::Color->new(
+        rand(0xffff), rand(0xffff), rand(0xffff));
+
+    $drawingarea->modify_bg('normal', $color);
+
+    my $color_selection;
+
+    $button->signal_connect(
+        'clicked',
+        sub
+        {
+            return if defined $color_selection;
+
+            # Create color selection dialog
+            $color_selection = new Gtk2::ColorSelectionDialog('');
+
+            $color_selection->signal_connect(
+                'response', sub
+                {
+                    $color_selection->hide();
+                    undef $color_selection;
+                });
+
+            # Connect to the 'color_changed' signal, set the client-data
+            # to the colorsel widget
+            $color_selection->colorsel->signal_connect(
+                'color_changed', sub
+                {
+                    $color = shift->get_current_color();
+                    $drawingarea->modify_bg('normal', $color);
+                });
+
+            # Show the dialog
+            $color_selection->show();
+
+        });
+
+    return $color;
+}
+
+
 
 1;
 
