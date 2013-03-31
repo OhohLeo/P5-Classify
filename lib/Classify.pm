@@ -78,12 +78,12 @@ sub BUILD
     # collections initialisation
     $self->collections(eval "retrieve(STORE_COLLECTIONS)" // {});
 
-    # traduction initialisation
+    # # traduction initialisation
     $self->trad(Classify::Traduction::->new(
                     classify => $self,
                     language => $self->trad));
 
-    # display initialisation
+    # # display initialisation
     if (defined $self->display)
     {
         $self->display(
@@ -91,6 +91,7 @@ sub BUILD
                 classify => $self,
                 on_stop => sub { $self->stop; }));
     }
+
 }
 
 =item $obj->start
@@ -512,18 +513,18 @@ Return string list of websites infos found.
 =cut
 sub get_info
 {
-    my $list = get_list(shift);
+    my $list; # = get_list(shift);
     my $with_url = shift;
     my $result;
-    while (my($name, $class) = each %$list)
-    {
-        eval "require $class";
-        die $@ if $@;
+    # while (my($name, $class) = each %$list)
+    # {
+    #     eval "require $class";
+    #     die $@ if $@;
 
-        $result .= " - $name : "
-            . ($with_url ? $class->url : '')
-            . $class->info . "\n";
-    }
+    #     $result .= " - $name : "
+    #         . ($with_url ? $class->url : '')
+    #         . $class->info . "\n";
+    # }
 
     return $result;
 }

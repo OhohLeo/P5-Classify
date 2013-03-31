@@ -58,6 +58,7 @@ Collections Management : -c options
 
  -c clean name [ name ... ]
     Clean all elements of a collection.
+    WARNING : you can choose 'all' to remove all collections.
 
  -c delete name [ name ... ]
     Delete a collection.
@@ -290,6 +291,9 @@ if (@collections)
         # we remove 1st element
         shift @collections;
 
+        @collections = keys %{$classify->collections}
+           if $collections[0] eq 'all';
+
         foreach my $collection (@collections)
         {
             defined($classify->delete_collection($collection))
@@ -300,6 +304,7 @@ if (@collections)
         exit;
     }
 
+    # on affiche les collections
     my @collection_objects;
     foreach my $collection (@collections)
     {
@@ -352,16 +357,7 @@ if (@imports)
                 $condvar->send;
             });
 
-        if (defined $display)
-        {
-            $import->set_display(
-                trad => Classify::Traduction::->new(data => 'FR'),
-                on_stop => sub
-                {
-                    $import->display(undef);
-                    $import->stop();
-                });
-        }
+        import_display($import) if defined $display;
 
         $import->launch;
         $condvar->recv;
@@ -401,16 +397,7 @@ if (@imports)
             $condvar->send unless @webs;
         });
 
-    if (defined $display)
-    {
-        $import->set_display(
-            trad => Classify::Traduction::->new(data => 'FR'),
-            on_stop => sub
-            {
-                $import->display(undef);
-                $import->stop();
-            });
-    }
+    import_display($import) if defined $display;
 
     my $console;
     foreach my $collection (@collections)
@@ -463,4 +450,17 @@ sub exit_warn
 {
     $classify->log_warn(shift);
     exit
+}
+
+sub import_display
+{
+    my $import = shift;
+
+    $import->set_display(
+        trad => Classify::Traduction::->new(data => 'FR'),
+        on_stop => sub
+        {
+            $import->display(undef);
+            $import->stop();
+        });
 }

@@ -30,6 +30,10 @@ has color => (
    is => 'rw',
  );
 
+has position => (
+   is => 'rw',
+ );
+
 has handle_result  => (
    is => 'rw',
  );
@@ -51,14 +55,16 @@ sub BUILD
     return $self;
 }
 
-=item $obj->set_color(GTK_COLOR)
+=item $obj->set_color(GDK_COLOR)
 
 Set collection 16-bit RGB values.
 
 =cut
 sub set_color
 {
-    shift->color(shift);
+    my($self, $color) = @_;
+
+    $self->color([ $color->blue, $color->green, $color->red, $color->pixel ]);
 }
 
 =item $obj->get_info

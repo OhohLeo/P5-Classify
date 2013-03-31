@@ -152,7 +152,7 @@ sub translate
                  $sheet_name, $param // next));
     }
 
-    return (@params);
+    return ((@params || return) == 1 ? $params[0] : @params);
 }
 
 =item $obj->translate_recursive(TRADUCTION, DATA)

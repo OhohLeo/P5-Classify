@@ -44,7 +44,44 @@ sub translate
     return shift->classify->translate(@_);
 }
 
-=item set_menu_bar(NAME, DATA, [ NAME, DATA ] ...)
+=item set_submenu(SET, MENU, NAME, DATA)
+
+Permet de créer un sous-menu en fonction de paramètres.
+
+I<NAME> est le nom du menu et le suivant est une référence vers un tableau
+contenant le nom du sous-menu et son callback à appeler.
+
+=cut
+sub set_submenu
+{
+    my($set, $menu, $name, $data) = @_;
+
+    my $submenu = Gtk2::MenuItem->new_with_label($name);
+    $submenu->set_submenu($menu) if defined $set;
+
+    for (ref $data)
+    {
+        when ('ARRAY')
+        {
+            while (@$data)
+            {
+                my($item_name, $cb) = splice(@$data, 0, 2);
+                my $menu_item = Gtk2::MenuItem->new_with_label($item_name);
+                $menu_item->signal_connect('button_press_event' => $cb);
+                $menu->append($menu_item);
+            }
+        }
+
+        when ('CODE')
+        {
+            $data->($submenu);
+        }
+    }
+
+    return $submenu;
+}
+
+=item set_menu(NAME, DATA, [ NAME, DATA ] ...)
 
 Permet de créer un menu en fonction de paramètres.
 
@@ -52,27 +89,36 @@ I<NAME> est le nom du menu et le suivant est une référence vers un tableau
 contenant le nom du sous-menu et son callback à appeler.
 
 =cut
+sub set_menu
+{
+    my $menu = Gtk2::Menu->new();
+
+    while (@_)
+    {
+        $menu->append(set_submenu(undef, $menu, splice(@_, 0, 2)));
+    }
+
+    return $menu;
+}
+
+
+=item set_menu_bar(NAME, DATA, [ NAME, DATA ] ...)
+
+Permet de créer une barre des menu en fonction de paramètres.
+
+I<NAME> est le nom du menu et le suivant est une référence vers un tableau
+contenant le nom du sous-menu et son callback à appeler.
+
+=cut
 sub set_menu_bar
 {
+
     my $menu_bar = Gtk2::MenuBar->new();
 
     while (@_)
     {
-        my($name, $data) = splice(@_, 0, 2);
-
         my $menu = Gtk2::Menu->new();
-
-        while (@$data)
-        {
-            my($item_name, $cb) = splice(@$data, 0, 2);
-            my $menu_item = Gtk2::MenuItem->new_with_label($item_name);
-            $menu_item->signal_connect('button_press_event' => $cb);
-            $menu->append($menu_item) ;
-        }
-
-        my $main_title = Gtk2::MenuItem->new_with_label($name);
-        $main_title->set_submenu($menu);
-        $menu_bar->append($main_title);
+        $menu_bar->append(set_submenu(1, $menu, splice(@_, 0, 2)));
     }
 
     return $menu_bar;
@@ -136,7 +182,7 @@ sub set_frame
     return $frame;
 }
 
-=item set_label(TEXT, SIZE, COLOR, JUSTIFY, WRAP)
+=item set_label(TEXT, [ SIZE, COLOR, JUSTIFY, WRAP ])
 
 Create a text label with I<TEXT>.
 
@@ -159,9 +205,10 @@ sub set_label
     my($text, $size, $color, $justify, $wrap) = @_;
     my $label = Gtk2::Label->new($text);
 
-    $label->set_markup("<span foreground=\"$color\" size=\"$size\">$text</span>");
-    $label->set_justify($justify);
-    $label->set_line_wrap($wrap);
+    $label->set_markup("<span foreground=\"$color\" size=\"$size\">$text</span>")
+        if defined $size and defined $color;
+    $label->set_justify($justify) if defined $justify;
+    $label->set_line_wrap($wrap) if defined $wrap;
 
     return $label;
 }
