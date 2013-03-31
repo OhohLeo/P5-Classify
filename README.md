@@ -1,7 +1,10 @@
-P5-Classify
++P5-Classify
 =============
 
 Optimised Collection Manager
+
+31/03/2013 Leo
+* Display : add tabs collection feature
 
 10/03/2013 Leo
 * Display : add color selector for new collection creation window

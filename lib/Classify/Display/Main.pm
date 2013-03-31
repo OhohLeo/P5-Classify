@@ -150,7 +150,6 @@ sub menu_collections
 
     foreach my $collection (@collections)
     {
-        $collection->position(0);
         $self->add_collection($collection, $notebook);
     }
 
@@ -174,9 +173,9 @@ sub add_collection
 {
     my($self, $collection, $notebook) = @_;
 
-    $notebook //= $self->notebook // return;
-
     my($name, $color) = ($collection->name, $collection->color);
+
+    $notebook //= $self->notebook // return;
 
     #$color = Gtk2::Gdk::Color->new(@$color);
 
@@ -189,6 +188,8 @@ sub add_collection
     my $child = Gtk2::VBox->new(0,0);
 
     my $id = $notebook->insert_page($child, $tab, 0);
+    $collection->position($id);
+    $self->refresh_add_collections($name);
 
     # destroy collection
     $tab->signal_connect(
@@ -218,44 +219,48 @@ sub add_collection
                 return;
             }
 
-            $notebook->set_current_page($id);
+            $notebook->set_current_page($collection->position);
         });
 
 
     $notebook->show_all;
 }
 
-=item $obj->refresh_collections(TYPE, POSITION)
+=item $obj->refresh_add_collections(EXCEPTION)
 
-Refresh collections ids.
-
-If I<TYPE> == 0 : increment all collections with 1.
-
-If I<TYPE> > 0  : decrement all collections with 1 from I<POSITION>.
+Increment all collections with 1 expect the collection called I<EXCEPTION>.
 
 =cut
-sub refresh_collections
+sub refresh_add_collections
 {
-    my($self, $type, $from) = @_;
+    my($self, $name) = @_;
 
     my @collections = values $self->classify->collections;
 
     foreach my $collection (@collections)
     {
-        my $position = $collection->position();
+        next if $collection->name eq $name;
 
-        if ($type == 0)
-        {
-            $position++;
-        }
-        elsif ($type > 0 and $position > $from)
-        {
-            $position--;
-        }
+        $collection->position($collection->position + 1);
+    }
+}
 
-        warn $collection->name . " $position ";
+=item $obj->refresh_delete_collections(POSITION)
 
-        $collection->position($position);
+Decrement all collections with 1 from I<POSITION>.
+
+=cut
+sub refresh_delete_collections
+{
+    my($self, $from) = @_;
+
+    my @collections = values $self->classify->collections;
+
+    foreach my $collection (@collections)
+    {
+        next unless $collection->position > $from;
+
+        $collection->position($collection->position - 1);
     }
 }
 
@@ -308,8 +313,6 @@ sub menu_new_collection
                 'button', 'ButtonValidate',
                 sub
                 {
-                    $self->refresh_collections(0);
-
                     my $collection = $self->classify->set_collection(
                         $self->validate_entry($name, $window) // return,
                         $self->validate_type($collection, $window) // return,
@@ -348,8 +351,6 @@ sub menu_delete_collection
     {
         $self // return;
 
-        warn $name;
-
         # we display a confirm menu
         shift->signal_connect(
             'button_press_event' => sub
@@ -362,7 +363,7 @@ sub menu_delete_collection
                         {
                             my $collection =
                                 $self->classify->delete_collection($name);
-                            $self->refresh_collections(1, $collection->position);
+                            $self->refresh_delete_collections($collection->position);
                             $notebook->remove_page($id);
                         }
                     });
