@@ -3,6 +3,11 @@
 
 Optimised Collection Manager
 
+18/06/2014 Leo
+ * Display : reorganised display handler
+ * Research : object that would be use to match data received with expected one
+ * Unit tests added
+
 31/03/2013 Leo
 * Display : add tabs collection feature
 

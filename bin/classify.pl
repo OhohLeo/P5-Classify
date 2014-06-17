@@ -6,9 +6,11 @@ use warnings;
 use Getopt::Long;
 
 use Classify;
+use Classify::Tools 'check_type';
 use Classify::Console;
 use Classify::Traduction;
-use Classify::Display::Main;
+use Classify::Display::Classify;
+use Classify::Display::Import;
 
 use Data::Dumper;
 
@@ -58,10 +60,11 @@ Collections Management : -c options
 
  -c clean name [ name ... ]
     Clean all elements of a collection.
-    WARNING : you can choose 'all' to remove all collections.
+    WARNING : you can choose 'all' to clean all collections.
 
  -c delete name [ name ... ]
     Delete a collection.
+    WARNING : you can choose 'all' to remove all collections.
 
  -c info
     Display all collections informations.
@@ -104,8 +107,17 @@ Traduction Management : -t options
 END
 }
 
-my $classify = Classify->new(display => $display,
-                             trad => $trad);
+
+
+my $classify;
+if (defined $display)
+{
+    $classify = Classify::Display::Classify->new(trad => $trad);
+}
+else
+{
+    $classify = Classify->new(trad => $trad);
+}
 
 my $condvar = AnyEvent->condvar;
 
@@ -141,10 +153,10 @@ if (@webs)
         exit_warn("Unexisting website : ($name)\n"
             . "Please choose with on this following list.\n"
             .  Classify::get_info('Web', 1))
-            unless Classify::check_type('Web', $name);
+            unless Classify::Tools::check_type('Web', $name);
 
         # we get the website object to make some requests
-        my $web = $classify->get_new_object_from_type('Web', $name);
+        my $web = $classify->create_object_from_type('Web', $name);
 
         $web->req(join('+', @webs), sub
                    {
@@ -161,7 +173,7 @@ if (@webs)
     foreach my $web (@webs)
     {
         push(@web_objects,
-             $classify->get_new_object_from_type('Web', $web)
+             $classify->create_object_from_type('Web', $web)
              // exit_warn("Web '$web' not found!"));
     }
 
@@ -171,8 +183,8 @@ if (@webs)
 if (@collections)
 {
     # -w info
-    #    Display all websites informations.
-    die $classify->info_collections(1)
+    #    Display all collections informations.
+    die $classify->collections->info(1)
         if @collections == 1 and $collections[0] eq 'info';
 
     # -c new name type
@@ -184,7 +196,7 @@ if (@collections)
     {
         if (defined $display)
         {
-            $classify->display_set_collection(
+            $classify->collection->add_display(
                 sub
                 {
                     Gtk2->main_quit;
@@ -199,10 +211,9 @@ if (@collections)
             shift @collections;
 
             # we check if collection type is valid
-            exit_warn('Unexisting collection : (' . $collections[1] . ")\n"
-                      . 'Please choose with on this following list.'
-                      . $classify->info_collections)
-                unless Classify::check_type('Collection', $collections[1]);
+            exit_warn('Unexisting collection (Classify::Collection::'
+		      . $collections[1] . ')')
+                unless Classify::Tools::check_type('Collection', $collections[1]);
 
             # we check if collection website is valid
             foreach my $web (@webs)
@@ -210,18 +221,17 @@ if (@collections)
                 exit_warn("Unexisting website : ($web)\n"
                           . "Please choose with on this following list.\n"
                           . $classify->info_websites)
-                    unless Classify::check_type('Web', $web);
+                    unless Classify::Tools::check_type('Web', $web);
             }
 
             # we set up the collection
-            my $collection = $classify->set_collection(
+            my $collection = $classify->collections->add(
                 $collections[0], $collections[1], @webs);
 
             exit unless defined $collection;
 
             exit_great("Collection '" . $collection->name
-                       . "' has been created.\n"
-                       . $collection->info . "\n");
+                       . "' has been created!");
         }
     }
 
@@ -240,12 +250,12 @@ if (@collections)
 
         # we search for valid collections
         my @collection_list =
-            $classify->get_collections_by_type($name)
-            || $classify->get_collections($name);
+            $classify->collections->get_by_type($name)
+            || $classify->collections->get($name);
 
         exist_warn("Unexisting collection : ($name)\n"
             . 'Please choose with on this following list.'
-            . $classify->info_collections)
+            . $classify->collections->info)
             unless @collection_list;
 
         my $key = shift @collections;
@@ -258,11 +268,11 @@ if (@collections)
             {
                 exit_warn("Unexisting key configuration : ($key)\n"
                     . 'Please choose with on this following list.'
-                    . $classify->info_collections);
+                    . $classify->collections->info);
             }
 
             $collection->$method(@collections > 0 ? \@collections : undef);
-            $classify->save_collections;
+            $classify->collections->save;
             exit_great("'$key' configuration set!\n");
         }
     }
@@ -276,7 +286,8 @@ if (@collections)
 
         foreach my $collection (@collections)
         {
-            defined($classify->clean_collection($collection))
+	    $classify->collections->clean($collection);
+            defined($classify->collections->get($collection))
                 ? $classify->log_great("Collection '$collection' cleaned!")
                 : $classify->log_warn("Collection '$collection' not found!");
         }
@@ -296,10 +307,12 @@ if (@collections)
 
         foreach my $collection (@collections)
         {
-            defined($classify->delete_collection($collection))
-                ? $classify->log_great("Collection '$collection' removed!")
+	    defined($classify->collections->get($collection))
+                ? $classify->log_great("Collection '$collection' deleted!")
                 : $classify->log_warn("Collection '$collection' not found!");
-        }
+
+            $classify->collections->delete($collection);
+	}
 
         exit;
     }
@@ -309,7 +322,7 @@ if (@collections)
     foreach my $collection (@collections)
     {
         $collection =
-            $classify->get_collection($collection)
+            $classify->collections->get($collection)
             // exit_warn("Collection '$collection' not found!");
 
         # update websites if needed.
@@ -339,29 +352,36 @@ if (@imports)
         exit_warn("Unexisting import : ($name)\n"
             . "Please choose with on this following list.\n"
             .  Classify::get_info('Import'))
-            unless Classify::check_type('Import', $name);
+            unless Classify::Tools::check_type('Import', $name);
 
-        my $import = $classify->get_new_object_from_type(
+        my $import = $classify->create_object_from_type(
             'Import', $name,
-            path => $imports[0],
-            filter=> qr/$filter/,
-            is_recursive => $imports[1],
-            condvar => $condvar,
-            on_output => sub
+            filter       => qr/$filter/,
+            condvar      => $condvar,
+            on_output    => sub
             {
-                $classify->log_info(shift->info);
+		$classify->log_info(shift->info);
             },
-            on_stop => sub
+            on_stop      => sub
             {
                 $classify->log_great("Import stopped!\n");
                 $condvar->send;
             });
 
-        import_display($import) if defined $display;
+        if (defined $display)
+	{
+	    $import = Classify::Display::Import::->new(
+		handle_import => $import,
+		classify => $classify);
+	}
 
-        $import->launch;
-        $condvar->recv;
-        $classify->save_collections;
+	warn "CALL START HERE!";
+        if ($import->start(@imports))
+	{
+	    $condvar->recv;
+	}
+
+        $classify->collections->save;
         exit;
     }
 
@@ -374,10 +394,10 @@ if (@imports)
     exit_warn("Unexisting import : ($name)\n"
         . "Please choose with on this following list.\n"
         .  Classify::get_info('Import'))
-        unless Classify::check_type('Import', $name);
+        unless Classify::Tools::check_type('Import', $name);
 
     # we get the website object to make some requests
-    my $import = $classify->get_new_object_from_type(
+    my $import = $classify->create_object_from_type(
         'Import', $name,
         path => $imports[0],
         filter=> qr/$filter/,
@@ -393,11 +413,18 @@ if (@imports)
         },
         on_stop => sub
         {
+	    warn "HERE!";
             $classify->log_great("Import stopped!\n");
             $condvar->send unless @webs;
         });
 
-    import_display($import) if defined $display;
+
+    if (defined $display)
+    {
+	$import = Classify::Display::Import::->new(
+	    handle_import => $import,
+	    classify => $classify);
+    }
 
     my $console;
     foreach my $collection (@collections)
@@ -410,7 +437,7 @@ if (@imports)
     }
 
 
-    $import->launch;
+    $import->start;
 
     if (@webs)
     {
@@ -433,7 +460,7 @@ if (@imports)
     }
 
     $condvar->recv;
-    $classify->save_collections;
+    $classify->collections->save;
     exit;
 }
 
@@ -457,7 +484,10 @@ sub import_display
     my $import = shift;
 
     $import->set_display(
-        trad => Classify::Traduction::->new(data => 'FR'),
+        trad => Classify::Traduction::->new(
+	    data => 'FR',
+	    classify => $classify,
+	),
         on_stop => sub
         {
             $import->display(undef);

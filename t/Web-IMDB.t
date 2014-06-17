@@ -26,17 +26,17 @@ sub check_search
 
     my $first_character = $result->{character}[0];
 
-    is(ref $first_character,  Classify::Model);
+    is(ref $first_character,  Classify::Research);
     is($first_character->get('name'), 'Matrix');
 
     my $first_star = $result->{star}[0];
 
-    is(ref $first_star,  Classify::Model);
+    is(ref $first_star,  Classify::Research);
     is($first_star->get('name'), 'Eddie Mariano');
 
     my $first_movie = $result->{movie}[0];
 
-    is(ref $first_movie,  Classify::Model);
+    is(ref $first_movie,  Classify::Research);
     is($first_movie->get('name'), 'Matrix');
     is($first_movie->get('year'), 1999);
     is($first_movie->get('seen_on'), undef);
@@ -50,7 +50,7 @@ sub check_movie
 {
     my $result = shift;
 
-    is(ref $result, Classify::Model);
+    is(ref $result, Classify::Research);
     # is($result->get('date'), "23 June 1999");
     is($result->get('original_name'), "The Matrix");
     # is($result->get('name'), "Matrix");
@@ -64,11 +64,11 @@ sub check_movie
 
     # is_deeply($result->get('directors'),
     #           [
-    #             Classify::Model->new(
+    #             Classify::Research->new(
     #                 type => 'star',
     #                 url => 'http://www.imdb.com/name/nm0905152/',
     #                 name => 'Andy Wachowski'),
-    #             Classify::Model->new(
+    #             Classify::Research->new(
     #                 type => 'star',
     #                 url => 'http://www.imdb.com/name/nm0905154/',
     #                 name => 'Lana Wachowski'),
@@ -76,15 +76,15 @@ sub check_movie
 
     # is_deeply($result->get('stars'),
     #           [
-    #            Classify::Model->new(
+    #            Classify::Research->new(
     #                 type => 'star',
     #                 url => 'http://www.imdb.com/name/nm0000206/',
     #                 name => 'Keanu Reeves'),
-    #             Classify::Model->new(
+    #             Classify::Research->new(
     #                 type => 'star',
     #                 url => 'http://www.imdb.com/name/nm0000401/',
     #                 name => 'Laurence Fishburne'),
-    #             Classify::Model->new(
+    #             Classify::Research->new(
     #                 type => 'star',
     #                 url => 'http://www.imdb.com/name/nm0005251/',
     #                 name => 'Carrie-Anne Moss'),

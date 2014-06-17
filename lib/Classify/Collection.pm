@@ -1,8 +1,6 @@
+
 package Classify::Collection;
 use parent Classify::Base;
-
-use strict;
-use warnings;
 
 use Carp;
 
@@ -14,6 +12,10 @@ has name => (
    is => 'rw',
  );
 
+has researches => (
+   is => 'rw',
+);
+
 has imported => (
    is => 'rw',
  );
@@ -23,14 +25,6 @@ has classified => (
  );
 
 has websites => (
-   is => 'rw',
- );
-
-has color => (
-   is => 'rw',
- );
-
-has position => (
    is => 'rw',
  );
 
@@ -49,44 +43,12 @@ sub BUILD
 {
     my $self = shift;
 
-    $self->classified({});
+    $self->researches({});
     $self->imported({});
+    $self->classified({});
+    $self->websites([]);
 
     return $self;
-}
-
-=item $obj->set_color(GDK_COLOR)
-
-Set collection 16-bit RGB values.
-
-=cut
-sub set_color
-{
-    my($self, $color) = @_;
-
-    $self->color([ $color->blue, $color->green, $color->red, $color->pixel ]);
-}
-
-=item $obj->get_info
-
-Return a string that display all collection informations.
-
-=cut
-sub get_info
-{
-    my $self = shift;
-
-    return "\n Web : none!\n" unless defined $self->websites;
-
-    my $result;
-    $result .= "\nWeb : ";
-
-    foreach my $web ($self->websites)
-    {
-        $result .= ref $web . ", ";
-    }
-
-    return $result;
 }
 
 =item $obj->input(INPUT)
@@ -169,6 +131,15 @@ sub clean
     $self->imported({});
 }
 
+=item $obj->delete
+
+Remove all possible timers.
+
+=cut
+sub delete
+{
+}
+
 =item clean_before_saving
 
 Clean collection before saving.
@@ -176,22 +147,51 @@ Clean collection before saving.
 =cut
 sub clean_before_saving
 {
-    my $self = shift;
-
-    $self->classify(undef);
-    $self->handle_result(undef);
+    shift->handle_result(undef);
 }
 
-=item restore(CLASSIFY)
+=item $obj->get_info
 
-Restore collection after saving.
+Return a string that display all collection informations.
 
 =cut
-sub restore
+sub get_info
 {
-    my($self, $classify) = @_;
+    my $self = shift;
 
-    $self->classify($classify);
+    my $info = "\n\tresearches = ";
+
+    # we enumerate researches handled by the collection
+    my $count = keys %{$self->researches};
+    if ($count)
+    {
+	while (my($name, undef) = each %{$self->researches})
+	{
+	    $info .= (--$count > 0) ? "$name, " : $name;
+	}
+    }
+    else
+    {
+	$info .= 'none!';
+    }
+
+    $info .= "\n\twebsites = ";
+
+    # we enumerate websites handled by the collection
+    $count = @{$self->websites};
+    if ($count)
+    {
+	foreach my $web (@{$self->websites})
+	{
+	    $info .= ($count-- > 0) ? ref $web . ', ' : ref $web;
+	}
+    }
+    else
+    {
+	$info .= 'none!';
+    }
+
+    return "$info\n";
 }
 
 1;

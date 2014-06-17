@@ -1,10 +1,9 @@
 package Classify::Collection::Cinema;
 use parent Classify::Collection;
 
-use strict;
-use warnings;
-
 use Moo;
+
+use Classify::Research;
 
 use Data::Dumper;
 
@@ -20,24 +19,52 @@ has subtitles_not_linked => (
     is => 'rw',
 );
 
+# researches are totally generic to the collection
+our %RESEARCHES = (
+    'movie' => Classify::Research::->new(
+	name => 'movie',
+	data_types => {
+	}),
+    'subtitle' => Classify::Research::->new(
+	name => 'subtitle',
+	data_types => {
+	})
+    );
+
 =head2 METHODS
 
 =over 4
 
-=item info
+=item BUILD
+
+=cut
+sub BUILD
+{
+    shift->researches(\%RESEARCHES);
+}
+
+=item info()
 
 Return collection description.
 
 =cut
 sub info
 {
-    return "handle, search & classify movies!\n"
-        . "\taccepted configuration keys :\n"
-        . "\t 'movies' = set movies extensions\n"
-        . "\t 'subtitles' = set subtitles extensions";
+    return "Handle, Search & Classify Movies!\n"
+        . "\t configuration keys =\n"
+        . "\t  'movies' = set movies extensions\n"
+        . "\t  'subtitles' = set subtitles extensions";
 }
 
-=item $obj->input
+=item $obj->create_movie()
+
+=cut
+
+=item $obj->create_subtitle()
+
+=cut
+
+=item $obj->input(INPUT)
 
 We handle here all the files imported.
 
@@ -85,7 +112,7 @@ sub input
     $self->web_search($input) if defined $self->websites;
 }
 
-=item $obj->subtitle_handle
+=item $obj->subtitle_handle(SUBTITLE)
 
 We handle subtitle and search for matching movies.
 

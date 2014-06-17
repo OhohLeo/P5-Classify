@@ -1,5 +1,4 @@
 package Classify::Display;
-use parent Classify::Base;
 
 use strict;
 use warnings;
@@ -11,38 +10,9 @@ use Moo;
 
 use feature 'switch';
 
-has on_stop => (
-   is => 'rw',
- );
-
 =head2 METHODS
 
 =over 4
-
-=item $obj->set(METHOD_NAME, PATH, NAME, DATA, [ NAME, DATA ] ...)
-
-Permet de créer un menu en fonction de paramètres.
-
-=cut
-sub set
-{
-    my($self, $method_name) = splice(@_, 0, 2);
-
-    if (defined(my $method = $self->can("set_$method_name")))
-    {
-        return $method->($self->translate(@_));
-    }
-}
-
-=item $obj->translate(SHEET_NAME, DATA ...)
-
-Return I<DATA> translate.
-
-=cut
-sub translate
-{
-    return shift->classify->translate(@_);
-}
 
 =item set_submenu(SET, MENU, NAME, DATA)
 
@@ -112,7 +82,6 @@ contenant le nom du sous-menu et son callback à appeler.
 =cut
 sub set_menu_bar
 {
-
     my $menu_bar = Gtk2::MenuBar->new();
 
     while (@_)
@@ -315,6 +284,8 @@ I<BUTTON> could be :
 =cut
 sub set_message_dialog
 {
+    use Data::Dumper;
+    warn Dumper(\@_);
     return Gtk2::MessageDialog->new(@_);
 }
 
@@ -330,12 +301,12 @@ sub set_button_drawing_area
     $box->pack_start( $button, 0, 0, 0 );
 
     # Create a button box
-    my $buttonbox = new Gtk2::VBox(0, 0);
+    my $buttonbox = Gtk2::VBox->new(0, 0);
     $buttonbox->show();
     $button->add($buttonbox);
 
     # Create the drawing area used to display the color
-    my $drawingarea = new Gtk2::DrawingArea();
+    my $drawingarea = Gtk2::DrawingArea->new;
     $drawingarea->size(32, 32);
     $drawingarea->show();
     $buttonbox->pack_start($drawingarea, 0, 0, 0);
@@ -355,7 +326,7 @@ sub set_button_drawing_area
             return if defined $color_selection;
 
             # Create color selection dialog
-            $color_selection = new Gtk2::ColorSelectionDialog('');
+            $color_selection = Gtk2::ColorSelectionDialog->new('');
 
             $color_selection->signal_connect(
                 'response', sub
@@ -380,8 +351,6 @@ sub set_button_drawing_area
 
     return $color;
 }
-
-
 
 1;
 

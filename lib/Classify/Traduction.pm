@@ -81,7 +81,7 @@ sub init
         return;
     }
 
-    $self->language($self->classify->save->{trad} // DEFAULT_LANGUAGE);
+    $self->language($self->classify->saved->{trad} // DEFAULT_LANGUAGE);
 }
 
 =item $obj->get_available_languages()
@@ -111,7 +111,7 @@ sub set_language
 
         $self->language($language);
 
-        $self->classify->save_classify('trad', $language);
+        $self->classify->save('trad', $language);
 
         return $languages->{$language};
     }

@@ -49,27 +49,6 @@ sub get_list ($)
 
              $name =~ s/\.pm$//;
 
-             $store{$name} = "Classify::$plugin\::$name"
-                 if (-f $_);
-
-         }, "lib/Classify/$plugin");
-
-    return \%store;
-}
-
-=item get_info(CLASS, WITH_URL)
-
-Return string list of websites infos found.
-
-=cut
-sub get_info
-{
-    my $list = get_list(shift);
-    my $with_url = shift;
-    my $result;
-    while (my($name, $class) = each %$list)
-    {
-        eval "require $class";
         die $@ if $@;
 
         $result .= " - $name : "

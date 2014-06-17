@@ -86,26 +86,26 @@ sub stop
     $self->on_stop->() if defined $self->on_stop;
 }
 
-=item $obj->on_input(COLLECTION, MODEL)
+=item $obj->on_input(COLLECTION, RESEARCH)
 
 =cut
 sub on_input
 {
-    my($self, $collection, $model) = @_;
+    my($self, $collection, $research) = @_;
 
     $self->to_classify([]) unless defined $self->to_classify;
 
-    push($self->to_classify, $collection, $model);
+    push($self->to_classify, $collection, $research);
 
     $self->count($self->count + 1);
 
-    $self->on_next_model unless $self->analysing;
+    $self->on_next_research unless $self->analysing;
 }
 
-=item $obj->on_next_model
+=item $obj->on_next_research
 
 =cut
-sub on_next_model
+sub on_next_research
 {
     my $self = shift;
 
@@ -127,7 +127,7 @@ sub on_next_model
 
     say 'Remaining ' . $self->count . ' file(s) to handle :';
 
-    $self->handle_model(splice($self->to_classify, 0, 2));
+    $self->handle_research(splice($self->to_classify, 0, 2));
 
     $self->count($self->count - 1);
 
@@ -135,18 +135,18 @@ sub on_next_model
     $self->to_classify(undef) if $self->count == 0;
 }
 
-=item $obj->handle_model(COLLECTION, MODEL)
+=item $obj->handle_research(COLLECTION, RESEARCH)
 
 =cut
-sub handle_model
+sub handle_research
 {
-    my($self, $collection, $model) = @_;
+    my($self, $collection, $research) = @_;
 
     say "Classify for '" . $collection->name
-        . "' collection :\n\t" . $model->get('name') . ":\n";
+        . "' collection :\n\t" . $research->get('name') . ":\n";
 
     # we handle best result found first
-    if (defined(my $best_result = $model->get('best_result')))
+    if (defined(my $best_result = $research->get('best_result')))
     {
         # we set the result callback
         $self->result(
@@ -164,7 +164,7 @@ sub handle_model
 
                     when (/n/)
                     {
-                        $self->on_next_model;
+                        $self->on_next_research;
                         return;
                     }
 
@@ -214,7 +214,7 @@ sub user_websites
 
                 when (/n/)
                 {
-                    $self->on_next_model;
+                    $self->on_next_research;
                     return;
                 }
 
@@ -248,13 +248,13 @@ sub user_confirm
                 when (/y/)
                  {
                      # we write the data
-                     $self->on_next_model;
+                     $self->on_next_research;
                      return;
                  }
 
                  when (/n/)
                  {
-                     $self->on_next_model;
+                     $self->on_next_research;
                      return;
                  }
 

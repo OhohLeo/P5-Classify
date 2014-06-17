@@ -1,23 +1,18 @@
 package Classify::Import::Files;
 use parent Classify::Import;
 
-use strict;
-use warnings;
-
 use AnyEvent::AIO;
 use IO::AIO;
 
 use Moo;
 
-use Classify::Model;
+use Scalar::Util;
+
+use Classify::Research;
 
 use feature qw(say state);
 
-has is_recursive => (
-   is => 'rw',
- );
-
-has nb_of_files => (
+has on_recursive => (
    is => 'rw',
  );
 
@@ -25,9 +20,44 @@ has condvar => (
    is => 'rw',
  );
 
+has store_research => (
+   is => 'rw',
+ );
+
+state $RESEARCHES = {
+    'file' =>
+    Classify::Research::->new(
+	name => 'file',
+	data_types => {
+	    name => 'text',
+	    path => 'directory',
+	    extension => 'text',
+	    url  => 'file',
+	}),
+    'directory' =>
+    Classify::Research::->new(
+	name => 'directory',
+	data_types => {
+	    url  => 'directory',
+	    name => 'text',
+	}),
+};
+
 =head2 METHODS
 
 =over 4
+
+=item BUILD
+
+=cut
+sub BUILD
+{
+    my $self = shift;
+
+    $self->researches($RESEARCHES);
+
+    $self->store_research({});
+}
 
 =item info
 
@@ -37,153 +67,151 @@ sub info
     return '{ path is_recursive } - analyse directories or files.';
 }
 
-=item launch
+=item $obj->start(PATH[, IS_RECURSIVE, REF_COUNT, ONLY_COUNT ])
+
+Start analyse of I<PATH>.
 
 =cut
-sub launch
+sub start
 {
-    my($self, $path) = @_;
+    my($self, $path, $is_recursive, $ref_count, $only_count) = @_;
 
-    # anyevent condvar initialisation
-    $self->condvar(AnyEvent->condvar);
-
-    $path //= $self->path;
-
-    # we start the display
-    if (defined(my $display = $self->display))
+    # on vérifie la présence obligatoire du path
+    unless (defined $path)
     {
-        $self->nb_of_files(1);
+	$self->classify->log_warn('No path specified');
+	$self->stop;
 
-        $display->start;
-
-        $self->update_display("Wait for analyse...", 0);
-
-        my $ref_count;
-        $$ref_count = 0;
-        $self->scan_count($path, $ref_count);
-
-        $self->con_dvar->recv;
-
-        $self->nb_of_files($$ref_count);
+	return undef;
     }
 
-    $self->scan($path);
+    # on défini le callback à appeler lorsqu'on souhaite une recherche
+    # récursive
+    if (defined $is_recursive)
+    {
+	$self->on_recursive(
+	    sub
+	    {
+		my($name, $ref_count, $only_count) = @_;
+
+		return aio_scandir(
+		    $name, 0, $self->scan_directory(
+			$name, $ref_count, $only_count));
+	    });
+    }
+
+    # on lance l'analyse
+    $self->scan($path, $ref_count, $only_count);
+
+    return 1;
 }
 
-=item scan_count
+=item $obj->stop()
 
 =cut
-sub scan_count
+sub stop
 {
-    my($self, $path, $ref_count) = @_;
+    my $self = shift;
+    warn "HERE STOP";
 
-    state $count_directories = 0;
+    if (defined $self->condvar)
+    {
+	warn "SEND STOP";
+    	$self->condvar->send;
+    }
 
-    aio_scandir(
-        $path, 0,
-        sub
-        {
-            my($dirs, $nondirs) = @_;
-
-            $count_directories-- if $count_directories > 0;
-
-            $$ref_count += @$nondirs // 0 if defined $nondirs;
-
-            if (defined $dirs)
-            {
-                $$ref_count += @$dirs // 0;
-                $count_directories += @$dirs;
-
-                foreach my $name (@$dirs)
-                {
-                    $self->scan_count("$path/$name", $ref_count)
-                        if defined $self->is_recursive;
-                }
-            }
-
-            $self->condvar->send
-                if $count_directories == 0 or not $self->is_recursive;
-        });
+    $self->SUPER::stop;
 }
 
-=item scan
+=item $obj->scan(PATH[, REF_COUNT, ONLY_COUNT ])
 
 =cut
 sub scan
 {
-    my($self, $path) = @_;
+    my($self, $path, $ref_count, $only_count) = @_;
 
-    state $count_files = 0;
-    state $count_directories = 0;
+    # unless (defined $self->condvar)
+    # {
+    # $self->condvar(AnyEvent->condvar);
+    # }
 
-    aio_scandir(
-        $path, 0,
-        sub
-        {
-            my($dirs, $nondirs) = @_;
+    # on initialise la valeur
+    $$ref_count = 0;
 
-            $count_directories-- if $count_directories > 0;
+    $self->store_research->{$path} =
+    	aio_scandir($path, 0, $self->scan_directory(
+    			$path, $ref_count, $only_count));
 
-            foreach my $name (@$nondirs)
-            {
-                if ($name =~ $self->filter)
-                {
-                    my $orig_name = $name;
-                    my $extension;
-                    if ($name =~ s/\.(.*)$//)
-                    {
-                        $extension = $1;
-                    }
+    $self->classify->condvar->recv;
 
-                    $self->output(
-                        Classify::Model::->new(
-                            type => 'file',
-                            name => $name,
-                            path => $path,
-                            extension => $extension,
-                            url => "$path/$orig_name"));
-                }
-
-                $self->update_display($name, $count_files)
-                    unless defined $self->is_recursive;
-
-                $count_files++;
-            }
-
-            foreach my $name (@$dirs)
-            {
-                if ($name =~ $self->filter)
-                {
-                    $self->output(
-                        Classify::Model::->new(
-                            type => 'directory',
-                            name => $name,
-                            url => $path,
-                        ));
-                }
-
-                $self->update_display($name, $count_files);
-
-                $self->scan("$path/$name") if defined $self->is_recursive;
-            }
-
-            $count_directories += @$dirs;
-
-            $self->condvar->send
-                if $count_directories == 0 or not $self->is_recursive;
-        });
+    # on retourne le nombre d'éléments à analyser
+    return $$ref_count;
 }
 
-=item update_display
+=item $obj->scan_directory(PATH, REF_COUNT, ONLY_COUNT)
+
+Launch files scanning through I<PATH>.
 
 =cut
-sub update_display
+sub scan_directory
 {
-    my($self, $name, $count) = @_;
+    my($self, $path, $ref_count, $only_count) = @_;
 
-    ($self->display // return)->update($name, $count / $self->nb_of_files);
-}
+    return sub
+    {
+	my($directories, $files) = @_;
 
+	$$ref_count += @$files;
+
+	if (not defined $only_count)
+	{
+	    foreach my $name (@$files)
+	    {
+		my $orig_name = $name;
+		my $extension;
+		if ($name =~ s/\.(.*)$//)
+		{
+		    $extension = $1;
+		}
+
+		$self->output(
+		    $RESEARCHES->{file}->new_data(
+			name => $name,
+			path => $path,
+			extension => $extension,
+			url => "$path/$orig_name"));
+	    }
+	}
+
+	foreach my $name (@$directories)
+	{
+	    $$ref_count++;
+
+	    if (not defined $only_count
+		and $name =~ $self->filter)
+	    {
+		$self->output(
+		    $RESEARCHES->{directory}->new_data(
+			name => $name,
+			url => $path,
+		    ));
+	    }
+
+	    {
+		# on stocke la nouvelle recherche
+		$self->store_research->{"$path/$name"} =
+		    ($self->on_recursive // next)->(
+			"$path/$name", $ref_count, $only_count);
+	    }
+	}
+
+	# on a fini l'analyse du dossier : on supprime du hash
+	delete $self->store_research->{$path};
+
+	# on a plus aucun dossier à analyser : on arrête
+	$self->stop() unless keys %{$self->store_research};
+    }
+};
 
 1;
 __END__

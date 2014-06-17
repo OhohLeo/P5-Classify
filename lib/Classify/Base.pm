@@ -52,25 +52,10 @@ BEGIN
     }
 }
 
-
-=back
-
-=head2 STATISTIC METHODS
-
-Methods used to search informations inside strings, to compare strings & models
-and find similarities.
-
-=over 4
-
-=cut
-
 1;
 __END__
 
 =back
-
-=head2 ATTRIBUT
-=over 4
 
 =head2 AUTHOR
 

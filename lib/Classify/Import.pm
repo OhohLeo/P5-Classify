@@ -8,13 +8,15 @@ use Carp;
 
 use Moo;
 
-use Classify::Display::Import;
-
-has path => (
+has filter => (
    is => 'rw',
  );
 
-has filter => (
+has researches => (
+   is => 'rw',
+);
+
+has nb => (
    is => 'rw',
  );
 
@@ -22,15 +24,7 @@ has on_output => (
    is => 'rw',
  );
 
-has display => (
-   is => 'rw',
- );
-
 has on_stop => (
-   is => 'rw',
- );
-
-has condvar => (
    is => 'rw',
  );
 
@@ -38,63 +32,43 @@ has condvar => (
 
 =over 4
 
-=item launch
+=item $obj->start()
 
-Méthode devant être implémentée dans tous les imports, permettant de lancer
-l'analyse.
+Method that start analyse : must be implemented.
 
 =cut
-sub launch
+sub start
 {
     croak "'launch' method not implemented in " . ref(shift);
 }
 
-=item stop
+=item $obj->stop()
 
 =cut
 sub stop
 {
-    my $self = shift;
-
-    if (defined $self->on_stop)
-    {
-        $self->on_stop->();
-        $self->on_stop(undef);
-    }
-
-    if (defined(my $display = $self->display))
-    {
-        $display->on_stop->();
-        $self->display(undef);
-    }
+    (shift->on_stop // return)->();
 }
 
-=item output
+=item $obj->count()
 
-Méthode devant être implémentée dans tous les imports, permettant d'émettre les
-données une fois analysées.
+Method that count the number of elements expected : not mandatory.
+
+=cut
+sub count
+{
+}
+
+=item $obj->output(DATA)
+
+Method to output new encapsulate data in the classify system.
 
 =cut
 sub output
 {
-    if (defined(my $out = shift->on_output))
-    {
-        return $out->(@_);
-    }
-}
+    my($self, $data) = @_;
 
-=item set_display
-
-=cut
-sub set_display
-{
-    my $self = shift;
-
-    my $display = Classify::Display::Import->new(@_);
-
-    $self->display($display);
-
-    return $display;
+    ($self->on_output // return)->($data);
 }
 
 1;

@@ -6,7 +6,7 @@ use warnings;
 
 use Data::Dumper;
 
-use Classify::Model;
+use Classify::Research;
 
 use feature 'switch';
 
@@ -96,7 +96,7 @@ sub search
             $result{character} //= [];
 
             push(@{$result{character}},
-                 Classify::Model::->new(
+                 Classify::Research::->new(
                      type => 'character',
                      name => $name,
                      url  => $self->url . $url));
@@ -115,7 +115,7 @@ sub search
             $result{star} //= [];
 
             push(@{$result{star}},
-                Classify::Model::->new(
+                Classify::Research::->new(
                      type => 'star',
                      name => $name,
                      url  => $self->url . $url));
@@ -150,7 +150,7 @@ sub search
             }
 
             push(@{$result{movie}},
-                 Classify::Model::->new(
+                 Classify::Research::->new(
                      type => 'movie',
                      name => $name,
                      year => $year,
@@ -180,7 +180,7 @@ sub movie
         sub {
             my $el = shift;
 
-            push(@directors, Classify::Model::->new(
+            push(@directors, Classify::Research::->new(
                      type => 'star',
                      name => $el->text,
                      url  => $self->url . $el->{href}));
@@ -191,7 +191,7 @@ sub movie
         sub {
             my $el = shift;
 
-            push(@stars, Classify::Model::->new(
+            push(@stars, Classify::Research::->new(
                      type => 'star',
                      name => $el->text,
                      url  => $self->url . $el->{href}));
@@ -215,7 +215,7 @@ sub movie
     my $poster = $data->find('img')->grep(qr/itemprop=\"image\"/)
         ->[0]->{src};
 
-    return Classify::Model::->new(
+    return Classify::Research::->new(
         type =>'movie',
         name => $name,
         url => $url,
